@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[144]:
-
-
 import pandas as pd 
 import numpy as np
 
@@ -11,9 +8,7 @@ import json
 
 import os
 
-
-# In[145]:
-
+import pickle 
 
 # for embeddings
 EMB_D = 200 
@@ -28,25 +23,6 @@ def loadGloveModel(gloveFile):
         model[word] = embedding
     print("Done.",len(model)," words loaded!")
     return model
-
-model_glove = loadGloveModel( "./data/glove.6B.200d.txt")
-
-
-# In[146]:
-
-
-files = os.listdir( "./data/")
-files_json = [ "./data/"+f for f in files if ".json" in f ]
-
-
-# In[147]:
-
-
-files_json
-
-
-# In[148]:
-
 
 # list of qtfiles
 
@@ -137,52 +113,20 @@ def get_embeddings( files_json ):
                 all_embeddings.append( embedding )
             
     return all_embeddings , mapping 
-        # project is given by file
-embs , mapp = get_embeddings( files_json )
 
+def process_files():
+    # project is given by file
+    files = os.listdir( "./data/")
+    files_json = [ "./data/"+f for f in files if ".json" in f ]
+    embs , mapp = get_embeddings( files_json )
+    len(embs)
+    embs = np.array( embs )
+    embs.shape
+    pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
+    np.save( "./data/embbedings200.npy" , embs   )
+    mapp
 
-# In[149]:
-
-
-len(embs)
-
-
-# In[150]:
-
-
-embs = np.array( embs )
-
-
-# In[151]:
-
-
-embs.shape
-
-
-# In[152]:
-
-
-import pickle 
-
-
-# In[153]:
-
-
-
-pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
-
-
-# In[154]:
-
-
-np.save( "./data/embbedings200.npy" , embs   )
-
-
-# In[127]:
-
-
-mapp
-
-
+model_glove = loadGloveModel( "./data/glove.6B.200d.txt")
+process_files()
 
 
