@@ -65,7 +65,7 @@ def search( qtid , index   ,  embs , mappings , k = 4  ):
     return I[0]
 
 
-@app.route("/get-related", methods=['GET'])
+@app.route("/getRelated", methods=['GET'])
 def main():
 
     idd = request.args.get('id')
@@ -90,7 +90,7 @@ def main():
     #print( I )
     return json.dumps(issues)
 
-@app.route("/post-project", methods=['POST'])
+@app.route("/postProject", methods=['POST'])
 def post_project():
 
     data = request.get_json()
