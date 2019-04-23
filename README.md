@@ -29,9 +29,16 @@ docker run -p 9210:9210 palmu
 
 ## How to Use This Microservice
 
-GET hostname:9210/?id={issueId}
+GET hostname:9210/get-related?id={issueId}
 
-Returns a String list of closest related issue IDs
+Returns a String list of closest related issue IDs (requires projects posted)
+
+POST hostname:9210/post-project
+
+(project JSON in request body)
+
+Post a new project to Palmu
+
 
 ## Notes for Developers
 
