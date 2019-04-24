@@ -37,7 +37,8 @@ def get_reqs( file ):
     return data["requirements"]
 
 def get_embedding_txt( txt  , model ):
-    
+    if txt is None or txt is "" or txt is " ":
+        return 0
     #txt = req["text"]
     # here return the embedding
     txt = txt.lower() 
@@ -55,7 +56,8 @@ def get_embedding_txt( txt  , model ):
     return embds
 
 def get_embedding_components( req , model ):
-    
+    if "requirementParts" not in req or -7 not in req["requirementParts"]:
+        return 0
     components_dict = req["requirementParts"][-1]
     #print( components_dict)
     if "text" not in components_dict.keys():
@@ -74,7 +76,8 @@ def get_embedding_components( req , model ):
         
 
 def get_embedding_com( req , model ):
-    
+    if "comments" not in req:
+        return 0
     embs = np.zeros( ( EMB_D ))
     for comment in req["comments"]:
         

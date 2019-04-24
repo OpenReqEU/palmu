@@ -44,8 +44,6 @@ def get_index():
 	#print( index.is_trained )
 	index.add( embs )
 	#print( embs.shape )
-	#print( index.ntotal )
-	print( "index created " )
 	k = 3 
 	D, I = index.search( embs [:5], k) 
 
@@ -73,10 +71,8 @@ def main():
     index , embs , mapping  = get_index()
     inverse_mapping = {v: k for k, v in mapping.items()}
 
-    #test = input( "Type a QT issue ID:" )
-    test = idd
-    print( "Query issue: " , test )
-    I = search( test , index , embs , mapping , k = 10 )
+    print( "Query issue: " , idd )
+    I = search( idd , index , embs , mapping , k = 10 )
 
     if I is None:
         return "No such ID found"
@@ -85,7 +81,6 @@ def main():
 
     print( "The closest related issues: ")
     for i in I[1:]:
-        print( "https://bugreports.qt.io/browse/" + inverse_mapping[i] )
         issues.append(inverse_mapping[i])
     #print( I )
     return json.dumps(issues)
@@ -109,6 +104,7 @@ def post_project():
 
     with open(path, 'w') as json_file:
         json.dump(data, json_file)
+        json_file.close()
 
     prepare_data.process_files()
 

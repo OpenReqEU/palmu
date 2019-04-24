@@ -35,7 +35,7 @@ ADD data /data
 
 RUN apk add --no-cache bash  
 
-RUN wget http://nlp.stanford.edu/data/glove.6B.zip && unzip -j glove.6B.zip glove.6B.200d.txt -d data && rm glove.6B.zip
+RUN wget http://nlp.stanford.edu/data/glove.6B.zip && unzip -jo glove.6B.zip glove.6B.200d.txt -d data && rm glove.6B.zip
 
 RUN conda update conda && conda install python && conda install faiss-cpu -c pytorch  && conda install -c anaconda pandas && conda install flask && conda install cherrypy && python prepare_data.py
 
