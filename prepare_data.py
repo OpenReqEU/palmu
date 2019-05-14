@@ -9,6 +9,8 @@ import json
 import os
 
 import pickle 
+import tables 
+
 
 # for embeddings
 EMB_D = 200 
@@ -45,9 +47,11 @@ def get_embedding_txt( txt  , model ):
     words = txt.split(" ")
     embds = np.zeros( ( EMB_D))
     for w in words:
-        if w in model.keys():
+        emb = None 
+        try: 
+        #if w in model.keys():
             emb = model[w]
-        else:
+        except:
             emb = np.zeros( (EMB_D) )
             
         embds += emb
@@ -88,7 +92,7 @@ def get_embedding_com( req , model ):
     embs = embs/(len( req["comments"]  ) + 1 )
     return embs 
 
-def get_embeddings( files_json ):
+def get_embeddings( files_json , model_glove  ):
     # return the 
     # id - > embeddings correspondence 
     all_embeddings = []
@@ -117,19 +121,21 @@ def get_embeddings( files_json ):
             
     return all_embeddings , mapping 
 
-def process_files():
-    # project is given by file
+def process_files( model_glove ):
+    # this function saves on disk the mappings in between the vector embeddings and the 
+
     files = os.listdir( "./data/")
     files_json = [ "./data/"+f for f in files if ".json" in f ]
-    embs , mapp = get_embeddings( files_json )
-    len(embs)
+    embs , mapp = get_embeddings( files_json  , model_glove )
     embs = np.array( embs )
-    embs.shape
+    
     pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
     np.save( "./data/embbedings200.npy" , embs   )
-    mapp
 
-model_glove = loadGloveModel( "./data/glove.6B.200d.txt")
-process_files()
+
+def onstart():
+
+    model_glove = loadGloveModel( "./data/glove.6B.200d.txt")
+    process_files( model_glove )
 
 

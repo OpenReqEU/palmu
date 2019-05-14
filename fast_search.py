@@ -12,16 +12,19 @@ import os
 import json
 from flask import Flask
 from flask import request
+
+from dataManager import DataManager
 app = Flask(__name__)
 
-parser = argparse.ArgumentParser(description=' Get similar reports of jira data')
+parser = argparse.ArgumentParser(description=' Get similar reports from jira data')
 
 parser.add_argument('--id', type =str , required = True )
 
 EMB_FILE = "./data/embbedings200.npy"
 MAP_FILE = "./data/mappings200.map"
+GLOVE_FILE = "./data/glove.6B.200d.txt" 
 
-
+dm = DataManager( GLOVE_FILE  )
 def load_data(  emb_file , map_file ):
 	
 	emb = np.load( emb_file )
@@ -61,7 +64,6 @@ def search( qtid , index   ,  embs , mappings , k = 4  ):
     distances , I = index.search( vector , k )
 
     return I[0]
-
 
 @app.route("/getRelated", methods=['GET'])
 def main():
@@ -111,6 +113,11 @@ def post_project():
     return "Project added"
 
 
+#app.before_first_request( prepare_data.onstart() )
+
 if __name__ == '__main__':
-	app.run()
-	
+
+	#prepare_data.onstart()
+
+	app.run(host='0.0.0.0')
+	#app.before_first_request( prepare_data.onstart()  )
