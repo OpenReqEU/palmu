@@ -25,6 +25,7 @@ MAP_FILE = "./data/mappings200.map"
 GLOVE_FILE = "./data/glove.6B.200d.txt" 
 
 dm = DataManager( GLOVE_FILE  )
+"""
 def load_data(  emb_file , map_file ):
 	
 	emb = np.load( emb_file )
@@ -64,28 +65,19 @@ def search( qtid , index   ,  embs , mappings , k = 4  ):
     distances , I = index.search( vector , k )
 
     return I[0]
-
+"""
 @app.route("/getRelated", methods=['GET'])
 def main():
 
     idd = request.args.get('id')
 
-    index , embs , mapping  = get_index()
-    inverse_mapping = {v: k for k, v in mapping.items()}
 
     print( "Query issue: " , idd )
-    I = search( idd , index , embs , mapping , k = 10 )
-
-    if I is None:
+    similar_issues = dm.find_by_id( idd , k = 10 ) 
+    if similar_issues  == []:
         return "No such ID found"
 
-    issues = []
-
-    print( "The closest related issues: ")
-    for i in I[1:]:
-        issues.append(inverse_mapping[i])
-    #print( I )
-    return json.dumps(issues)
+    return json.dumps(similar_issues)
 
 @app.route("/postProject", methods=['POST'])
 def post_project():

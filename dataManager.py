@@ -17,16 +17,51 @@ class DataManager():
 		self.model_glove = self.loadGloveModel( gloveFile )
 		self.emb_dim = emb_dim
 		# create files 
-		self.process_files( self.model_glove )
+		self.process_files( gloveFile  )
+		print("aaasdadas")
 
+		self.buildIndex()
+
+		l = self.find_by_id( "QTWB-30" )
+		print(l)
 		return None
 
 	def buildIndex( self ):
+		#builds the search index 
 
+		D = self.emb_dim
+		print( self.data.shape  ) 
+		self.index = faiss.IndexFlatL2( D )
+		self.index.add( self.data )
+
+	def find_by_id( self , qtid  , k = 5 ):
+		# return list of know issues 
+		if not qtid in self.mappings:
+			print( "ID NOT FOUND")
+			return None
+
+		ind = self.mappings[ qtid ]
+    # got the vector
+
+		vector = self.data[ ind , : ].reshape( (1 , self.emb_dim ))
+		print( vector.shape )
+		distances , I = self.index.search( vector , k )
+
+		print( I )
+		found_issues = []
+
+		for issue in I[0][1:] :
+
+			found_issues.append( self.inverse_mapping[issue]  )
+		return found_issues
+
+	def find_new_issue( self , openreqJson ):
+
+		return 
 
 	def reqInData( self , idd ):
 
-		return idd in self.mapping.keys()
+		return idd in self.mappings.keys()
 
 	def loadGloveModel( self , gloveFile):
 
@@ -41,19 +76,56 @@ class DataManager():
 		print("Done.",len(model)," words loaded!")
 		return model
 
-	def process_files( self , model_glove ):
+	def process_files( self , gloveFile ):
 	    # this function saves on disk the mappings in between the vector embeddings and the 
 	    # List existing files on data folder , 
-		files = os.listdir( "./data/")
-		files_json = [ "./data/"+f for f in files if ".json" in f ]
-		embs , mapp = self.get_embeddings( files_json   )
-		self.mapping = mapp 
-		embs = np.array( embs )
 
-		pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
-		np.save( "./data/embbedings200.npy" , embs   )
+	    if os.path.isfile( "./data/hdf_emb.h5" ):
 
-		return True
+	    	self.mappings = pickle.load( open( "./data/mappings200.map" , "rb") )
+	    	self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+	    	self.loadHDF5()
+	    	print( "File already exists ! loaded ")
+
+	    else:
+
+
+			files = os.listdir( "./data/")
+			files_json = [ "./data/"+f for f in files if ".json" in f ]
+			print("aaasdadas")
+			embs , mapp = self.get_embeddings( files_json  )
+			self.mappings = mapp
+			self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+
+			embs = np.array( embs )
+			print("wtf men ")
+
+			pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
+			#np.save( "./data/embbedings200.npy" , embs   )
+
+			hdf5_embedd_file = tables.open_file(  "./data/hdf_emb.h5" , mode='w')
+			a = tables.Atom.from_dtype( np.dtype('<f8'), dflt=0.0 )
+			shape = ( 0 , )
+			earray = hdf5_embedd_file.create_earray(hdf5_embedd_file.root,'data', a ,shape,"Embeddings")
+
+			for emb in embs:
+
+				earray.append( emb )
+
+
+			hdf5_embedd_file.close()
+			self.loadHDF5()
+
+			print("HDF5 FILE CREATED AND LOADED")
+			#atom=tb.StringAtom(itemsize=8)
+
+	def loadHDF5( self ):
+
+		f = tables.open_file( "./data/hdf_emb.h5" , mode = "r")
+		self.hdf5_file = f
+		self.data = self.hdf5_file.root.data[:]
+		self.data = np.array( self.data ).astype( np.float32 )
+		self.data = self.data.reshape( ( -1 , self.emb_dim ))
 
 	def get_embeddings( self ,  files_json  ):
 		# return the 
