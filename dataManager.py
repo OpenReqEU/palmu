@@ -19,11 +19,18 @@ class DataManager():
 		# create files 
 		self.process_files( gloveFile  )
 		print("aaasdadas")
-
+		self.indexSize = 0 
 		self.buildIndex()
+		self.indexSize = self.data.shape[0] - 1 
 
-		l = self.find_by_id( "QTWB-30" )
-		print(l)
+		#l = self.find_by_id( "QTWB-30" )
+		f = open("./test.txt" , "r")
+		d = f.read()
+		f.close()
+
+		req = json.loads( d )
+		l = self.find_by_new( req )
+		print( l )
 		return None
 
 	def buildIndex( self ):
@@ -38,6 +45,7 @@ class DataManager():
 		# return list of know issues 
 		if not qtid in self.mappings:
 			print( "ID NOT FOUND")
+
 			return None
 
 		ind = self.mappings[ qtid ]
@@ -55,13 +63,59 @@ class DataManager():
 			found_issues.append( self.inverse_mapping[issue]  )
 		return found_issues
 
-	def find_new_issue( self , openreqJson ):
+	def find_by_new( self , openreqJson ):
 
-		return 
+		# this assumes a openredJson with the fields:
+		newId = openreqJson["id"]
 
-	def reqInData( self , idd ):
+		if newId in self.mappings: # no es nuevo en realidad
 
-		return idd in self.mappings.keys()
+			return self.find_by_id( newId )
+
+		embedding = self.get_single_embedding( openreqJson )
+		if embedding is None :
+			# Something happend and
+			return "Invalid req"
+		else:
+			self.add_new_embedding_index( embedding , newId  )
+			issues = self.find_by_id( newId )
+
+			return issues
+
+	def add_new_embedding_index( self , embedding , newId ) :
+
+
+
+		self.data_elastic.append( embedding )
+		self.data = self.hdf5_file.root.data[:]
+		self.data = np.array( self.data ).astype( np.float32 )
+		self.data = self.data.reshape( ( -1 , self.emb_dim ))
+
+		#rebuild index 
+		self.index = faiss.IndexFlatL2( self.emb_dim  )
+		self.index.add( self.data )
+
+		self.indexSize = self.indexSize + 1 
+		self.mappings[ newId ] = self.indexSize 
+		self.inverse_mapping[ self.indexSize ] = newId 
+
+		pickle.dump( self.mappings ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
+
+
+	def get_single_embedding( self , req ):
+
+		if "text" in req.keys():
+#print( req["text"])
+			name_emb = self.get_embedding_txt( req["name"] , self.model_glove )
+			embedding = self.get_embedding_txt( req["text"]  , self.model_glove )
+			comment_emb = self.get_embedding_com( req , self.model_glove )
+			component_emb = self.get_embedding_components( req , self.model_glove )
+			embedding =  0.1*name_emb + 0.5*embedding + 0.3*comment_emb + 0.1*component_emb 
+
+			return embedding 
+		else: 
+			return None
+
 
 	def loadGloveModel( self , gloveFile):
 
@@ -121,11 +175,14 @@ class DataManager():
 
 	def loadHDF5( self ):
 
-		f = tables.open_file( "./data/hdf_emb.h5" , mode = "r")
+		f = tables.open_file( "./data/hdf_emb.h5" , mode = "a")
 		self.hdf5_file = f
+		self.data_elastic = self.hdf5_file.root.data 
 		self.data = self.hdf5_file.root.data[:]
 		self.data = np.array( self.data ).astype( np.float32 )
 		self.data = self.data.reshape( ( -1 , self.emb_dim ))
+
+
 
 	def get_embeddings( self ,  files_json  ):
 		# return the 
@@ -143,6 +200,14 @@ class DataManager():
 
 				if "text" in req.keys():
 				#print( req["text"])
+					if req["id"] == "QTBUG-6229":
+
+						data = json.dumps( req )
+						f = open( "test.txt" , "w") 
+						f.write(data)
+						f.close()
+						print( "Saved test requ")
+						continue
 					name_emb = self.get_embedding_txt( req["name"] , self.model_glove )
 					embedding = self.get_embedding_txt( req["text"]  , self.model_glove )
 					comment_emb = self.get_embedding_com( req , self.model_glove )

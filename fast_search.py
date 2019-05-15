@@ -25,47 +25,6 @@ MAP_FILE = "./data/mappings200.map"
 GLOVE_FILE = "./data/glove.6B.200d.txt" 
 
 dm = DataManager( GLOVE_FILE  )
-"""
-def load_data(  emb_file , map_file ):
-	
-	emb = np.load( emb_file )
-
-	mapping  = pickle.load( open(map_file , "rb") )
-
-	return emb, mapping
-
-def get_index():
-
-	embs , mapping = load_data( EMB_FILE , MAP_FILE )
-
-	embs = embs.astype( np.float32 )
-	#D = embs.shape[1]
-	D = embs.shape[1]
-
-	#print( embs.shape )
-	#print(D)
-	index = faiss.IndexFlatL2( D )
-	#print( index.is_trained )
-	index.add( embs )
-	#print( embs.shape )
-	k = 3 
-	D, I = index.search( embs [:5], k) 
-
-	return index ,  embs , mapping
-
-def search( qtid , index   ,  embs , mappings , k = 4  ):
-    if not qtid in mappings:
-        return None
-
-    ind = mappings[ qtid ]
-    # got the vector
-
-    vector = embs[ ind , : ].reshape( (1 , embs.shape[1] ))
-    print( vector.shape )
-    distances , I = index.search( vector , k )
-
-    return I[0]
-"""
 @app.route("/getRelated", methods=['GET'])
 def main():
 
@@ -78,6 +37,7 @@ def main():
         return "No such ID found"
 
     return json.dumps(similar_issues)
+
 
 @app.route("/postProject", methods=['POST'])
 def post_project():
