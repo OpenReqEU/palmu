@@ -24,13 +24,10 @@ class DataManager():
 		self.indexSize = self.data.shape[0] - 1 
 
 		#l = self.find_by_id( "QTWB-30" )
-		f = open("./test.txt" , "r")
-		d = f.read()
-		f.close()
+		###  TEST 
+		self.test()
 
-		req = json.loads( d )
-		l = self.find_by_new( req )
-		print( l )
+		## TEEEST 
 		return None
 
 	def buildIndex( self ):
@@ -200,13 +197,13 @@ class DataManager():
 
 				if "text" in req.keys():
 				#print( req["text"])
-					if req["id"] == "QTBUG-6229":
+					if file.endswith( "QTWEBSITE.json" ) :
 
 						data = json.dumps( req )
-						f = open( "test.txt" , "w") 
-						f.write(data)
+						f = open( "test_large.txt" , "a") 
+						f.write(data +os.linesep )
 						f.close()
-						print( "Saved test requ")
+						#print( "Saved test requ")
 						continue
 					name_emb = self.get_embedding_txt( req["name"] , self.model_glove )
 					embedding = self.get_embedding_txt( req["text"]  , self.model_glove )
@@ -278,4 +275,41 @@ class DataManager():
 			emb = self.get_embedding_txt( txt , model  )
 			embs += emb 
 		embs = embs/(len( req["comments"]  ) + 1 )
-		return embs 
+		return embs
+
+
+	def test( self ) :
+
+		# create some test 
+
+		f = open( "./test_large.txt" , "r") 
+
+
+		reqs = []
+		dupls = []
+		print("<sdasdasdadsassssssssssssssssssssss")
+		for line in f:
+
+			# each line is a req 
+			print(line)
+			req = json.loads( line )
+
+			issues = self.find_by_new( req )
+
+			reqs.append( req["id"] )
+			dupls.append( issues )
+
+		f.close()
+		d = {
+
+			"Ids" : reqs , 
+			"Similar issues" : dupls   
+		} 
+
+
+		df = pd.DataFrame( d ) 
+		df.to_csv("./results_test.csv")
+
+
+
+
