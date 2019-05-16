@@ -1,11 +1,14 @@
 
 import pandas as pd 
 import numpy as np
+from sklearn import preprocessing
+
 import json
 import os
 import pickle 
 import tables
 import faiss 
+import featurizer 
 
 class DataManager():
 
@@ -16,27 +19,29 @@ class DataManager():
 
 		self.model_glove = self.loadGloveModel( gloveFile )
 		self.emb_dim = emb_dim
+		#self.featurizer = featurizer.Featurizer( self.model_glove , self.emb_dim )
 		# create files 
 		self.process_files( gloveFile  )
 		print("aaasdadas")
 		self.indexSize = 0 
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
-
-		#l = self.find_by_id( "QTWB-30" )
-		###  TEST 
-		self.test()
-
-		## TEEEST 
+		
+		l = self.find_by_id( "QTWB-30" )
+		print(l)
+		#self.test()
 		return None
 
 	def buildIndex( self ):
 		#builds the search index 
 
-		D = self.emb_dim
+		D = self.featurizer.final_size
 		print( self.data.shape  ) 
+
+		
 		self.index = faiss.IndexFlatL2( D )
 		self.index.add( self.data )
+		print( "indexxxx" , self.index.is_trained) 
 
 	def find_by_id( self , qtid  , k = 5 ):
 		# return list of know issues 
@@ -45,10 +50,10 @@ class DataManager():
 
 			return None
 
-		ind = self.mappings[ qtid ]
+		ind = self.mappings[ qtid ] 
     # got the vector
 
-		vector = self.data[ ind , : ].reshape( (1 , self.emb_dim ))
+		vector = self.data[ ind , : ].reshape( (1 , self.featurizer.final_size  ))
 		print( vector.shape )
 		distances , I = self.index.search( vector , k )
 
@@ -57,6 +62,7 @@ class DataManager():
 
 		for issue in I[0][1:] :
 
+			print( self.inverse_mapping[issue] )
 			found_issues.append( self.inverse_mapping[issue]  )
 		return found_issues
 
@@ -69,7 +75,8 @@ class DataManager():
 
 			return self.find_by_id( newId )
 
-		embedding = self.get_single_embedding( openreqJson )
+		#embedding = self.get_single_embedding( openreqJson )
+		embedding = self.featurizer.featurize( openreqJson )
 		if embedding is None :
 			# Something happend and
 			return "Invalid req"
@@ -81,12 +88,10 @@ class DataManager():
 
 	def add_new_embedding_index( self , embedding , newId ) :
 
-
-
 		self.data_elastic.append( embedding )
 		self.data = self.hdf5_file.root.data[:]
 		self.data = np.array( self.data ).astype( np.float32 )
-		self.data = self.data.reshape( ( -1 , self.emb_dim ))
+		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
 
 		#rebuild index 
 		self.index = faiss.IndexFlatL2( self.emb_dim  )
@@ -97,21 +102,6 @@ class DataManager():
 		self.inverse_mapping[ self.indexSize ] = newId 
 
 		pickle.dump( self.mappings ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
-
-
-	def get_single_embedding( self , req ):
-
-		if "text" in req.keys():
-#print( req["text"])
-			name_emb = self.get_embedding_txt( req["name"] , self.model_glove )
-			embedding = self.get_embedding_txt( req["text"]  , self.model_glove )
-			comment_emb = self.get_embedding_com( req , self.model_glove )
-			component_emb = self.get_embedding_components( req , self.model_glove )
-			embedding =  0.1*name_emb + 0.5*embedding + 0.3*comment_emb + 0.1*component_emb 
-
-			return embedding 
-		else: 
-			return None
 
 
 	def loadGloveModel( self , gloveFile):
@@ -135,6 +125,7 @@ class DataManager():
 
 	    	self.mappings = pickle.load( open( "./data/mappings200.map" , "rb") )
 	    	self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+	    	self.featurizer = pickle.load( open("./data/featurizer.ft" , "rb"))
 	    	self.loadHDF5()
 	    	print( "File already exists ! loaded ")
 
@@ -177,44 +168,49 @@ class DataManager():
 		self.data_elastic = self.hdf5_file.root.data 
 		self.data = self.hdf5_file.root.data[:]
 		self.data = np.array( self.data ).astype( np.float32 )
-		self.data = self.data.reshape( ( -1 , self.emb_dim ))
+		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
 
 
 
 	def get_embeddings( self ,  files_json  ):
 		# return the 
-		# id - > embeddings correspondence 
+		# id - > embeddings correspondence
+		
 		all_embeddings = []
 		comment_embeddings = [] 
 		index = 0
 		mapping = {}
 		print( files_json )
+
+		all_reqs = []
 		for file in files_json:
 			print( file )
 			requirements = self.get_reqs( file )
+			all_reqs = all_reqs + requirements 
 
-			for req in requirements:
+		status = ["default"]
+		types = ["default"]
+		for req in all_reqs:
+			if "status" in req :
+				status.append( req["status"] )
 
-				if "text" in req.keys():
-				#print( req["text"])
-					if file.endswith( "QTWEBSITE.json" ) :
+			if "requirement_type" in req:
+				types.append( req["requirement_type"])
 
-						data = json.dumps( req )
-						f = open( "test_large.txt" , "a") 
-						f.write(data +os.linesep )
-						f.close()
-						#print( "Saved test requ")
-						continue
-					name_emb = self.get_embedding_txt( req["name"] , self.model_glove )
-					embedding = self.get_embedding_txt( req["text"]  , self.model_glove )
-					comment_emb = self.get_embedding_com( req , self.model_glove )
-					component_emb = self.get_embedding_components( req , self.model_glove )
 
-					embedding =  0.1*name_emb + 0.5*embedding + 0.3*comment_emb + 0.1*component_emb 
-					#embedding is a vector 
-					mapping[req["id"]] = index
-					index  = index + 1
-					all_embeddings.append( embedding )
+		# list unique status 
+		status = list( set( status))
+		types = list(set(types))
+		print( status )
+		print( types )
+		encoder_status = preprocessing.LabelEncoder()
+		encoder_type = preprocessing.LabelEncoder()
+		encoder_status = encoder_status.fit( status )
+		encoder_type = encoder_type.fit( types )
+		self.featurizer = featurizer.Featurizer( self.model_glove , self.emb_dim , encoder_status , encoder_type)
+
+		all_embeddings , mapping = self.featurizer.featurize_reqs( all_reqs )
+		pickle.dump( self.featurizer ,   open( "./data/featurizer.ft", "wb" ) , protocol=2 )
 
 		return all_embeddings , mapping 
 
@@ -227,57 +223,7 @@ class DataManager():
 			data = json.loads( data )
 			print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
 		return data["requirements"]
-
-	def get_embedding_txt(self ,  txt  , model ):
-
-		if txt is None or txt is "" or txt is " ":
-			return 0
-		#txt = req["text"]
-		# here return the embedding
-		txt = txt.lower() 
-		words = txt.split(" ")
-		embds = np.zeros( ( self.emb_dim))
-		for w in words:
-			emb = None 
-			try: 
-			#if w in model.keys():
-			    emb = model[w]
-			except:
-			    emb = np.zeros( (self.emb_dim) )
-		    
-			embds += emb
-
-		embds = embds / len( words )
-		return embds
-
-	def get_embedding_components( self ,  req , model ):
-		if "requirementParts" not in req or -7 not in req["requirementParts"]:
-			return 0
-		components_dict = req["requirementParts"][-1]
-		if "text" not in components_dict.keys():
-			return np.zeros( (self.emb_dim))
-		text_list = components_dict["text"] #.replace( '"' , "")[1:-1] #.split(",") #  .split('"' )
-		embs = np.zeros( (self.emb_dim))
-		for word in text_list:
-			if word in model.keys():
-	 			emb = model[word]
-				embs += emb 
-		embs = embs / (len( text_list ) + 1 )
-		return embs 
 	        
-
-	def get_embedding_com( self , req , model ):
-		if "comments" not in req:
-			return 0
-		embs = np.zeros( ( self.emb_dim ))
-		for comment in req["comments"]:
-			txt = comment["text"]
-			emb = self.get_embedding_txt( txt , model  )
-			embs += emb 
-		embs = embs/(len( req["comments"]  ) + 1 )
-		return embs
-
-
 	def test( self ) :
 
 		# create some test 
