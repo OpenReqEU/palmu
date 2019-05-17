@@ -9,6 +9,7 @@ import pickle
 import tables
 import faiss 
 import featurizer 
+from faiss import normalize_L2
 
 class DataManager():
 
@@ -27,43 +28,56 @@ class DataManager():
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
 		
-		l = self.find_by_id( "QTWB-30" )
-		print(l)
-		#self.test()
+		#l = self.find_by_id( "QTWB-30" )
+		#print(l)
+		self.test_accuracy()
 		return None
 
 	def buildIndex( self ):
 		#builds the search index 
 
 		D = self.featurizer.final_size
-		print( self.data.shape  ) 
+		#print( self.data.shape  ) 
 
+		#print( self.data.shape   )
+		#self.index = faiss.IndexFlatL2( D )
+		self.index = faiss.IndexFlatIP( D )
+		#self.index.train(  normalize_L2( self.) )
+		#cont = np.ascontiguousarray( self.data )
+		#cont = faiss.normalize_L2( cont )
+		#print(cont)
+		self.index.train( self.norm_vec(self.data) )
+		self.index.add( self.norm_vec( self.data)  )
 		
-		self.index = faiss.IndexFlatL2( D )
-		self.index.add( self.data )
 		print( "indexxxx" , self.index.is_trained) 
 
+	def norm_vec( self , a ):
+
+		
+		a = a / np.sqrt( (a*a).sum(axis = 1 ) ).reshape( a.shape[0]  , 1 )
+		return a 
 	def find_by_id( self , qtid  , k = 5 ):
 		# return list of know issues 
 		if not qtid in self.mappings:
 			print( "ID NOT FOUND")
 
-			return None
+			return []
 
 		ind = self.mappings[ qtid ] 
     # got the vector
 
 		vector = self.data[ ind , : ].reshape( (1 , self.featurizer.final_size  ))
-		print( vector.shape )
-		distances , I = self.index.search( vector , k )
+		#print( vector.shape )
+		distances , I = self.index.search( self.norm_vec( vector )   , k )
 
-		print( I )
+		#print( I )
 		found_issues = []
 
 		for issue in I[0][1:] :
 
-			print( self.inverse_mapping[issue] )
-			found_issues.append( self.inverse_mapping[issue]  )
+			#print( self.inverse_mapping[issue] )
+			if issue in self.inverse_mapping:
+				found_issues.append( self.inverse_mapping[issue]  )
 		return found_issues
 
 	def find_by_new( self , openreqJson ):
@@ -255,6 +269,68 @@ class DataManager():
 
 		df = pd.DataFrame( d ) 
 		df.to_csv("./results_test.csv")
+
+
+	def test_accuracy( self ):
+
+		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
+		#df = df[:10	]
+		ids = df["ids"].values
+		dependencies = df["dependencies"].values
+
+
+		results = []
+		l = 0
+
+		ks = [ 5 , 20 ]
+
+		for idd , dep  in zip(ids , dependencies )  :
+			print( l )
+			l = l + 1 
+			corrects_by_k = []
+			for k  in ks :
+
+				issues = self.find_by_id( idd  , k = k  )
+
+				corrects = 0
+				correct_issues = []
+				for i in issues: 
+
+					if i in dep:
+						corrects = corrects + 1
+						correct_issues.append( i )
+
+				d = 0 
+				if len( dep) == 0 :
+					d = 1 
+				true_positives_rate = corrects/float( len( dep  )  + d )
+				corrects_by_k.append( correct_issues )
+
+			results.append( corrects_by_k )
+
+
+		df["palmu_depencendies"] = results 
+
+		df2 = pd.DataFrame( df.palmu_depencendies.to_list() , columns = [ "k5" , "k20" ] )
+
+		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
+
+		df_final.to_csv("./results_test_k5_k20_cosine_duplicates.csv")
+
+		k5_found = 0
+		k20_found = 0 
+		total = 0
+		for i , j , k   in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] ):
+			k5_found += len(i )
+			k20_found += len( j )
+			total += len( k ) 
+
+
+		print( "K 5 accuracy: {}".format( k5_found/float( total) )  )
+		print( "K 20 accuracy: {}".format( k20_found/float( total) )  )
+
+
+
 
 
 

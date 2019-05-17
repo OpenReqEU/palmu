@@ -74,8 +74,10 @@ class Featurizer( ):
 
 
 		#final_embedding = np.hstack( [ emb_text , emb_name , emb_comment , emb_mix ]  )
-		final_embedding = 0.1*emb_name + 0.5*emb_text  + 0.3*emb_comment + 0.1*emb_components
+		final_embedding = 0.5*emb_name + 0.5*emb_text  # + 0.3*emb_comment + 0.1*emb_components
+		#final_embedding = em_
 		#print( emb_name )
+
 		return final_embedding
 
 
@@ -84,8 +86,8 @@ class Featurizer( ):
 		#embedding = np.zeros( (self.dim) )
 
 		if txt is None or txt is "" or txt is " ":
-
-			return np.zeros( (self.dim) ) # np.zeros( (self.dim))
+			return np.random.normal( size = (self.dim) )
+			#return np.zeros( (self.dim) ) # np.zeros( (self.dim))
 
 
 		txt = txt.lower() 
@@ -117,7 +119,7 @@ class Featurizer( ):
 			emb = self.get_average_embedding( txt    )
 			embs += emb 
 
-		embs = embs/(len(  req["comments"] + 1 ))
+		embs = embs/(len(  req["comments"]  ) + 1 )
 
 		return embs  
 
