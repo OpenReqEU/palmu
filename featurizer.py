@@ -72,9 +72,9 @@ class Featurizer( ):
 		else:
 			emb_type = np.zeros( len(self.encoder_type.classes_)  )
 
-
+			
 		#final_embedding = np.hstack( [ emb_text , emb_name , emb_comment , emb_mix ]  )
-		final_embedding = 0.5*emb_name + 0.5*emb_text  # + 0.3*emb_comment + 0.1*emb_components
+		final_embedding = 0.7*emb_name + 0.3*emb_text   + 0.3*emb_comment #+ 0.1*emb_components
 		#final_embedding = em_
 		#print( emb_name )
 
@@ -110,7 +110,7 @@ class Featurizer( ):
 
 		if "comments" not in req  or len(  req["comments"]) == 0 :
 			#print("noooooooooooooooo")
-			return np.zeros( (self.dim) )
+			return np.random.normal( size = (self.dim) )
 
 
 		embs = np.zeros( ( self.dim ))
@@ -126,10 +126,10 @@ class Featurizer( ):
 
 	def get_components_embeddings( self ,  req ,  ):
 		if "requirementParts" not in req or -7 not in req["requirementParts"]:
-			return np.zeros( (self.dim))
+			return np.random.normal( size = (self.dim) )
 		components_dict = req["requirementParts"][-1]
 		if "text" not in components_dict.keys():
-			return np.zeros( (self.dim))
+			return np.random.normal( size = (self.dim) )
 
 		text_list = components_dict["text"] #.replace( '"' , "")[1:-1] #.split(",") #  .split('"' )
 		embs = np.zeros( (self.dim))

@@ -9,7 +9,6 @@ import pickle
 import tables
 import faiss 
 import featurizer 
-from faiss import normalize_L2
 
 class DataManager():
 
@@ -53,9 +52,10 @@ class DataManager():
 
 	def norm_vec( self , a ):
 
-		
+
 		a = a / np.sqrt( (a*a).sum(axis = 1 ) ).reshape( a.shape[0]  , 1 )
-		return a 
+
+		return  np.nan_to_num( a )  
 	def find_by_id( self , qtid  , k = 5 ):
 		# return list of know issues 
 		if not qtid in self.mappings:
@@ -93,7 +93,7 @@ class DataManager():
 		embedding = self.featurizer.featurize( openreqJson )
 		if embedding is None :
 			# Something happend and
-			return "Invalid req"
+			return []
 		else:
 			self.add_new_embedding_index( embedding , newId  )
 			issues = self.find_by_id( newId )
@@ -273,7 +273,7 @@ class DataManager():
 
 	def test_accuracy( self ):
 
-		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
+		df = pd.read_csv("./dataset_palmu_test.csv")
 		#df = df[:10	]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
@@ -282,7 +282,7 @@ class DataManager():
 		results = []
 		l = 0
 
-		ks = [ 5 , 20 ]
+		ks = [ 5 , 20 , 100 , 200]
 
 		for idd , dep  in zip(ids , dependencies )  :
 			print( l )
@@ -311,23 +311,29 @@ class DataManager():
 
 		df["palmu_depencendies"] = results 
 
-		df2 = pd.DataFrame( df.palmu_depencendies.to_list() , columns = [ "k5" , "k20" ] )
+		df2 = pd.DataFrame( df.palmu_depencendies.to_list() , columns = [ "k{}".format(x) for x in ks ] )
 
 		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
 
-		df_final.to_csv("./results_test_k5_k20_cosine_duplicates.csv")
+		df_final.to_csv("./results_test_k5_k20_cosine.csv")
 
 		k5_found = 0
-		k20_found = 0 
+		k20_found = 0
+		k100_found = 0 
+		k200_found = 0 
 		total = 0
-		for i , j , k   in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] ):
+		for i , j , k , m , l    in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] , df_final["k100"] , df_final["k200"] ):
 			k5_found += len(i )
 			k20_found += len( j )
-			total += len( k ) 
+			total += len( k )
+			k100_found += len(m) 
+			k200_found += len(l )
 
 
 		print( "K 5 accuracy: {}".format( k5_found/float( total) )  )
 		print( "K 20 accuracy: {}".format( k20_found/float( total) )  )
+		print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
+		print( "K 200 accuracy: {}".format( k200_found/float( total) )  )
 
 
 

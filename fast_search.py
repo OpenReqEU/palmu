@@ -38,6 +38,22 @@ def main():
 
     return json.dumps(similar_issues)
 
+@app.route("/newIssue" , methods = ["POST"])
+def new_issue():
+
+	req = request.get_json()
+
+	if data is None:
+		return "No data"
+
+	similar_issues = dm.find_by_new( req )
+
+	if similar_issues == []:
+
+		return "Not valid req"
+
+
+	return json.dumps( similar_issues ) 
 
 @app.route("/postProject", methods=['POST'])
 def post_project():
