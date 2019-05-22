@@ -9,18 +9,19 @@ import pickle
 import tables
 import faiss 
 import featurizer 
+import fastTextUtils 
 
 class DataManager():
 
 
-	def __init__(self , gloveFile = "./path" , emb_dim = 200 ):
+	def __init__(self , gloveFile = "./path" , emb_dim = 200 , model_fasttext = "" ):
 
 		# create model. 
 
-		self.model_glove = self.loadGloveModel( gloveFile )
-		self.emb_dim = emb_dim
-		#self.featurizer = featurizer.Featurizer( self.model_glove , self.emb_dim )
-		# create files 
+		#self.model_glove = self.loadGloveModel( gloveFile )
+		self.model_fasttext = fastTextUtils.FastTextUtils( model_fasttext )
+		self.emb_dim = self.model_fasttext.dim 
+
 		self.process_files( gloveFile  )
 		print("aaasdadas")
 		self.indexSize = 0 
@@ -59,7 +60,7 @@ class DataManager():
 	def find_by_id( self , qtid  , k = 5 ):
 		# return list of know issues 
 		if not qtid in self.mappings:
-			print( "ID NOT FOUND")
+			#print( "ID NOT FOUND")
 
 			return []
 
@@ -151,11 +152,11 @@ class DataManager():
 			print("aaasdadas")
 			embs , mapp = self.get_embeddings( files_json  )
 			self.mappings = mapp
-			self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+			self.inverse_mapping = {v: k for k, v in self.mappings.items() }
 
 			embs = np.array( embs )
-			print("wtf men ")
-
+			print("wtf men  ")
+			print("asdads")
 			pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
 			#np.save( "./data/embbedings200.npy" , embs   )
 
@@ -221,7 +222,7 @@ class DataManager():
 		encoder_type = preprocessing.LabelEncoder()
 		encoder_status = encoder_status.fit( status )
 		encoder_type = encoder_type.fit( types )
-		self.featurizer = featurizer.Featurizer( self.model_glove , self.emb_dim , encoder_status , encoder_type)
+		self.featurizer = featurizer.Featurizer( self.model_fasttext.model , self.model_fasttext.dim  , encoder_status , encoder_type)
 
 		all_embeddings , mapping = self.featurizer.featurize_reqs( all_reqs )
 		pickle.dump( self.featurizer ,   open( "./data/featurizer.ft", "wb" ) , protocol=2 )
@@ -273,7 +274,7 @@ class DataManager():
 
 	def test_accuracy( self ):
 
-		df = pd.read_csv("./dataset_palmu_test.csv")
+		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
 		#df = df[:10	]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
@@ -282,10 +283,12 @@ class DataManager():
 		results = []
 		l = 0
 
-		ks = [ 5 , 20 , 100 , 200]
+		ks = [ 5 , 20 , 100 , 1000]
 
 		for idd , dep  in zip(ids , dependencies )  :
-			print( l )
+			if l % 500 == 0 :
+
+				print( l )
 			l = l + 1 
 			corrects_by_k = []
 			for k  in ks :
@@ -315,25 +318,26 @@ class DataManager():
 
 		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
 
-		df_final.to_csv("./results_test_k5_k20_cosine.csv")
+		df_final.to_csv("./results_test_k5_k20_duplicates.csv")
 
 		k5_found = 0
 		k20_found = 0
 		k100_found = 0 
 		k200_found = 0 
 		total = 0
-		for i , j , k , m , l    in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] , df_final["k100"] , df_final["k200"] ):
+		for i , j , k , m , l    in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] , df_final["k100"] , df_final["k1000"] ):
 			k5_found += len(i )
 			k20_found += len( j )
 			total += len( k )
 			k100_found += len(m) 
 			k200_found += len(l )
 
-
+		total = df_final.shape[0]
+		print("OVERAll accuracy")
 		print( "K 5 accuracy: {}".format( k5_found/float( total) )  )
 		print( "K 20 accuracy: {}".format( k20_found/float( total) )  )
 		print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
-		print( "K 200 accuracy: {}".format( k200_found/float( total) )  )
+		print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
 
 
 

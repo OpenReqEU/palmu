@@ -5,7 +5,7 @@ import os
 import pickle 
 import tables
 import faiss 
-
+import string
 
 
 class Featurizer( ):
@@ -48,14 +48,15 @@ class Featurizer( ):
 	def featurize( self , req ):
 		# build the features for a single request 
 		#print( req["text"])
-		emb_text = self.get_average_embedding( req["text"] ) 
-		emb_name = self.get_average_embedding( req["name"] ) 
+		emb_text = self.get_average_embedding( req["text"]  ) 
+		emb_name = self.get_average_embedding(  req["name"]  )  
 		emb_comment = self.get_comments_embeddings( req )
 		emb_components = self.get_components_embeddings( req )
 
 		#emb_mix = (emb_text + emb_name +emb_comment)/3.0
 
 		# those arent word embedding but one-hot encoded vectors
+		"""
 		if "status" in req:
 			emb = self.encoder_status.transform(   [req["status"]]   )
 			#print(emb)
@@ -72,9 +73,9 @@ class Featurizer( ):
 		else:
 			emb_type = np.zeros( len(self.encoder_type.classes_)  )
 
-			
-		#final_embedding = np.hstack( [ emb_text , emb_name , emb_comment , emb_mix ]  )
-		final_embedding = 0.7*emb_name + 0.3*emb_text   + 0.3*emb_comment #+ 0.1*emb_components
+		""" 
+		#final_embedding = np.hstack( [ emb_text , emb_name , emb_comment  ]  )
+		final_embedding = ( 0.4*emb_name + 0.4*emb_text   + 0.2*emb_comment) #+ 0.1*emb_components
 		#final_embedding = em_
 		#print( emb_name )
 
@@ -86,23 +87,24 @@ class Featurizer( ):
 		#embedding = np.zeros( (self.dim) )
 
 		if txt is None or txt is "" or txt is " ":
-			return np.random.normal( size = (self.dim) )
+			#return np.random.normal( size = (self.dim) )
+			return np.zeros( (self.dim))
 			#return np.zeros( (self.dim) ) # np.zeros( (self.dim))
 
 
-		txt = txt.lower() 
+		txt = self.text_clean( txt )
 		words = txt.split(" ")
 		embedding = np.zeros( ( self.dim))
 		for w in words:
 			emb = None 
 			try: 
-			#if w in model.keys():
-			    emb = self.words_model[w]
+				emb = self.words_model[w]
 			except:
-			    emb = np.zeros( (self.dim) )
-		    
-			embedding += emb
+				emb = np.zeros( (self.dim) )
 
+			#print( emb )
+			embedding += emb
+		#print(embedding)
 		embedding = embedding / len( words )
 		return embedding
 
@@ -110,8 +112,8 @@ class Featurizer( ):
 
 		if "comments" not in req  or len(  req["comments"]) == 0 :
 			#print("noooooooooooooooo")
-			return np.random.normal( size = (self.dim) )
-
+			#return np.random.normal( size = (self.dim) )
+			return np.zeros( (self.dim) )
 
 		embs = np.zeros( ( self.dim ))
 		for comment in req["comments"]:
@@ -138,7 +140,15 @@ class Featurizer( ):
 	 			emb = self.word_model[word]
 				embs += emb 
 		embs = embs / (len( text_list ) + 1 )
-		return embs 
+		return embs
+
+	def text_clean( self , text ):
+	
+		text = text.lower()
+		text = text.encode("utf-8" , "ignore")
+		text = text.translate( string.maketrans("",""), string.punctuation  )
+		#print(text)
+		return text 
 
 
 

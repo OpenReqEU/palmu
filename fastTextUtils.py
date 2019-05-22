@@ -6,7 +6,7 @@ from gensim.models import FastText
 import string
 
 
-class FasTextUtils():
+class FastTextUtils():
 
 
 	def __init__(self , model_path ):
@@ -19,7 +19,7 @@ class FasTextUtils():
 
 	def load_model(self):
 
-		self.model =  FastText.load_fasttext_format( path )
+		self.model =  FastText.load_fasttext_format( self.model_path )
 
 		v = self.model["example"]
 		self.dim = v.shape[0]
@@ -27,7 +27,7 @@ class FasTextUtils():
 		return True
 
 	def text_clean( self , text ):
-		# 
+
 		text = text.lower()
 		text = text.encode("utf-8" , "ignore")
 		text = text.translate( string.maketrans("",""), string.punctuation  )
@@ -50,10 +50,5 @@ class FasTextUtils():
 		return embedding 
 
 
-path = "../fastText/qtmodel.bin"
-ft = FasTextUtils( path )
-
-emb = ft.get_embedding( "que es mi barco mi tesoro, mi pendon mi libertad")
-print(emb)
 
 

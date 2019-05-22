@@ -22,9 +22,10 @@ parser.add_argument('--id', type =str , required = True )
 
 EMB_FILE = "./data/embbedings200.npy"
 MAP_FILE = "./data/mappings200.map"
-GLOVE_FILE = "./data/glove.6B.200d.txt" 
+GLOVE_FILE = "./data/glove.6B.200d.txt"
+FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 
-dm = DataManager( GLOVE_FILE  )
+dm = DataManager( GLOVE_FILE , model_fasttext = FAST_TEXT_MODEL )
 @app.route("/getRelated", methods=['GET'])
 def main():
 
