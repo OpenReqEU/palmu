@@ -6,7 +6,7 @@ import faiss
 import pickle 
 import argparse
 
-import prepare_data
+#import prepare_data
 import os
 
 import json
@@ -24,8 +24,10 @@ EMB_FILE = "./data/embbedings200.npy"
 MAP_FILE = "./data/mappings200.map"
 GLOVE_FILE = "./data/glove.6B.200d.txt"
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
+LGB_PATH = "./data/lgb_results"
 
-dm = DataManager( GLOVE_FILE , model_fasttext = FAST_TEXT_MODEL )
+dm = DataManager( GLOVE_FILE , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
+
 @app.route("/getRelated", methods=['GET'])
 def main():
 

@@ -8,19 +8,19 @@ import os
 import pickle 
 import tables
 import faiss 
-import featurizer 
-import fastTextUtils 
+import featurizer , fastTextUtils , gbmModel 
 
 class DataManager():
 
 
-	def __init__(self , gloveFile = "./path" , emb_dim = 200 , model_fasttext = "" ):
+	def __init__(self , gloveFile = "./path" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" ):
 
 		# create model. 
 
 		#self.model_glove = self.loadGloveModel( gloveFile )
 		self.model_fasttext = fastTextUtils.FastTextUtils( model_fasttext )
 		self.emb_dim = self.model_fasttext.dim 
+		self.model_lgbm = gbmModel.GBMModel( path = lgb_path , name = lgb_name )
 
 		self.process_files( gloveFile  )
 		print("aaasdadas")
@@ -57,13 +57,13 @@ class DataManager():
 		a = a / np.sqrt( (a*a).sum(axis = 1 ) ).reshape( a.shape[0]  , 1 )
 
 		return  np.nan_to_num( a )  
-	def find_by_id( self , qtid  , k = 5 ):
+	def find_by_id( self , qtid  , k = 5 , k2 = 10  ):
 		# return list of know issues 
 		if not qtid in self.mappings:
 			#print( "ID NOT FOUND")
 
 			return []
-
+		# ind, index od the vector 
 		ind = self.mappings[ qtid ] 
     # got the vector
 
@@ -74,11 +74,29 @@ class DataManager():
 		#print( I )
 		found_issues = []
 
+		data_lgb = np.zeros(   (  len( I[0][1:]  ) , 2*self.emb_dim   ))
+		i = 0
+		partial_map = {}
 		for issue in I[0][1:] :
 
 			#print( self.inverse_mapping[issue] )
+			# issue is an index
+			emb_candidate = self.data[ issue , : ].reshape( 1 ,self.emb_dim )
+
+			data_point = np.hstack( [ vector , emb_candidate ] )
+			data_lgb[ i , : ] = data_point
+			partial_map[ i] = issue 
+			i += 1 
+
+
+		top_indexs = self.model_lgbm.get_top_k( data_lgb , k = k2  )
+
+		for index in top_indexs:
+			issue = partial_map[index]
 			if issue in self.inverse_mapping:
 				found_issues.append( self.inverse_mapping[issue]  )
+
+
 		return found_issues
 
 	def find_by_new( self , openreqJson ):
@@ -274,22 +292,25 @@ class DataManager():
 
 	def test_accuracy( self ):
 
-		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
-		#df = df[:10	]
+		df = pd.read_csv("./dataset_palmu_test.csv")
+		df = df[:100]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
 
 
 		results = []
+
 		l = 0
 
-		ks = [ 5 , 20 , 100 , 1000]
+		ks = [ 100 , 1000  ]
 
+		k100_tp = []
 		for idd , dep  in zip(ids , dependencies )  :
-			if l % 500 == 0 :
+			#if l % 500 == 0 :
 
-				print( l )
-			l = l + 1 
+			print( l )
+			l = l + 1
+
 			corrects_by_k = []
 			for k  in ks :
 
@@ -307,6 +328,10 @@ class DataManager():
 				if len( dep) == 0 :
 					d = 1 
 				true_positives_rate = corrects/float( len( dep  )  + d )
+				
+				#print(" True positives rate: " ,  true_positives_rate )
+				#print( "False positives rate:" , 1 - true_positives_rate )
+				#print( "Samples:" , len(issues))
 				corrects_by_k.append( correct_issues )
 
 			results.append( corrects_by_k )
@@ -318,26 +343,26 @@ class DataManager():
 
 		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
 
-		df_final.to_csv("./results_test_k5_k20_duplicates.csv")
+		df_final.to_csv("./results_test_k5_k20_with_lgb.csv")
 
 		k5_found = 0
 		k20_found = 0
 		k100_found = 0 
 		k200_found = 0 
 		total = 0
-		for i , j , k , m , l    in zip(df_final["k5"].values , df_final["k20"] , df_final["dependencies"] , df_final["k100"] , df_final["k1000"] ):
+		for i , j , k     in zip(df_final["k100"].values , df_final["k1000"] , df_final["dependencies"]  ):
 			k5_found += len(i )
 			k20_found += len( j )
 			total += len( k )
-			k100_found += len(m) 
-			k200_found += len(l )
+			#k100_found += len(m) 
+			#k200_found += len(l )
 
 		total = df_final.shape[0]
 		print("OVERAll accuracy")
-		print( "K 5 accuracy: {}".format( k5_found/float( total) )  )
-		print( "K 20 accuracy: {}".format( k20_found/float( total) )  )
-		print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
-		print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
+		print( "K 100 accuracy: {}".format( k5_found/float( total) )  )
+		print( "K 1000 accuracy: {}".format( k20_found/float( total) )  )
+		#print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
+		#print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
 
 
 
