@@ -6,6 +6,7 @@ This service was created as a result of the OpenReq project funded by the Europe
 # Technical Description
 
 Palmu uses vectors to find similar issues within Qt Jira data.
+The set of Qt issues is transformed to vector representations using FastText embeddings, and a fast similarity search algorithm is able to find the nearest neighbords for a given query. The idea is that vectors that are close in the embedding space must be somehow related and correspond to duplicates or dependencies in the _issue_ space. This search seems to be good to reduce the search space ( from hundred thousands to hundreds ) in the reduced space a random forest classifier is applied to output the _k-th_ most likely dependencies. 
 
 ## The following technologies are used:
 - Python
