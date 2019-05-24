@@ -2,3 +2,4 @@
 *.npy
 data/*.txt
 .project
+*.csv
