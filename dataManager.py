@@ -292,8 +292,8 @@ class DataManager():
 
 	def test_accuracy( self ):
 
-		df = pd.read_csv("./dataset_palmu_test.csv")
-		df = df[:100]
+		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
+		df = df[:]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
 
@@ -343,7 +343,7 @@ class DataManager():
 
 		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
 
-		df_final.to_csv("./results_test_k5_k20_with_lgb.csv")
+		df_final.to_csv("./results_test_k5_k20_with_lgb_duplicates.csv")
 
 		k5_found = 0
 		k20_found = 0
