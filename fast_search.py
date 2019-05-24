@@ -20,40 +20,37 @@ parser = argparse.ArgumentParser(description=' Get similar reports from jira dat
 
 parser.add_argument('--id', type =str , required = True )
 
-EMB_FILE = "./data/embbedings200.npy"
-MAP_FILE = "./data/mappings200.map"
-GLOVE_FILE = "./data/glove.6B.200d.txt"
+
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
 
-dm = DataManager( GLOVE_FILE , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
+dm = DataManager( jsons_path = "./data" , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
 
 @app.route("/getRelated", methods=['GET'])
 def main():
 
     idd = request.args.get('id')
 
+    if idd is None:
+    	return {}
 
-    print( "Query issue: " , idd )
+    #print( "Query issue: " , idd )
     similar_issues = dm.find_by_id( idd , k = 10 ) 
     if similar_issues  == []:
-        return "No such ID found"
+        return {}
 
     return json.dumps(similar_issues)
 
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
 
+	# read request 
 	req = request.get_json()
-
-	if data is None:
-		return "No data"
-
 	similar_issues = dm.find_by_new( req )
 
 	if similar_issues == []:
 
-		return "Not valid req"
+		return {}
 
 
 	return json.dumps( similar_issues ) 
@@ -63,7 +60,8 @@ def post_project():
 
     data = request.get_json()
     if data is None:
-        return 'No data posted!'
+        return {}
+
 
     project_name = data["projects"][0]["id"]
 
@@ -81,7 +79,7 @@ def post_project():
 
     prepare_data.process_files()
 
-    return "Project added"
+    return { "status" : "ok"}
 
 
 #app.before_first_request( prepare_data.onstart() )

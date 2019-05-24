@@ -13,17 +13,23 @@ import featurizer , fastTextUtils , gbmModel
 class DataManager():
 
 
-	def __init__(self , gloveFile = "./path" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" ):
+	def __init__(self , jsons_path = "./data" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" ):
 
 		# create model. 
 
-		#self.model_glove = self.loadGloveModel( gloveFile )
+		# load fast text model
 		self.model_fasttext = fastTextUtils.FastTextUtils( model_fasttext )
-		self.emb_dim = self.model_fasttext.dim 
+		self.emb_dim = self.model_fasttext.dim
+		# load GBM models
 		self.model_lgbm = gbmModel.GBMModel( path = lgb_path , name = lgb_name )
+		# creating auxiliar paths 
+		self.jsons_path = jsons_path
+		self.hdf_path = self.jsons_path + "/hdf_emb.h5"
+		self.mappings_path = self.jsons_path +  "/mappings200.map"
+		self.featurizer_path = self.jsons_path + "/featurizer.ft"
 
-		self.process_files( gloveFile  )
-		print("aaasdadas")
+
+		self.process_files(  )
 		self.indexSize = 0 
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
@@ -36,52 +42,50 @@ class DataManager():
 	def buildIndex( self ):
 		#builds the search index 
 
+		# Dimenstion of the vectors
 		D = self.featurizer.final_size
-		#print( self.data.shape  ) 
-
-		#print( self.data.shape   )
-		#self.index = faiss.IndexFlatL2( D )
 		self.index = faiss.IndexFlatIP( D )
 		#self.index.train(  normalize_L2( self.) )
 		#cont = np.ascontiguousarray( self.data )
 		#cont = faiss.normalize_L2( cont )
-		#print(cont)
 		self.index.train( self.norm_vec(self.data) )
 		self.index.add( self.norm_vec( self.data)  )
 		
-		print( "indexxxx" , self.index.is_trained) 
+		print( "Index Trained" , self.index.is_trained) 
 
 	def norm_vec( self , a ):
-
+		# function to normalize vectors 
 
 		a = a / np.sqrt( (a*a).sum(axis = 1 ) ).reshape( a.shape[0]  , 1 )
 
 		return  np.nan_to_num( a )  
-	def find_by_id( self , qtid  , k = 5 , k2 = 10  ):
+
+	def find_by_id( self , qtid  , k = 5 , k2 = 20  ):
 		# return list of know issues 
+
+		# if the id is not in the index, return an empty list 
 		if not qtid in self.mappings:
-			#print( "ID NOT FOUND")
 
 			return []
 		# ind, index od the vector 
-		ind = self.mappings[ qtid ] 
-    # got the vector
+		index_id = self.mappings[ qtid ] 
 
-		vector = self.data[ ind , : ].reshape( (1 , self.featurizer.final_size  ))
+		vector = self.data[ index_id , : ].reshape( (1 , self.featurizer.final_size  ))
 		#print( vector.shape )
 		distances , I = self.index.search( self.norm_vec( vector )   , k )
 
 		#print( I )
 		found_issues = []
 
-		data_lgb = np.zeros(   (  len( I[0][1:]  ) , 2*self.emb_dim   ))
+		# prepare data for the GBM models 
+		data_lgb = np.zeros(   (  len( I[0][1:]  ) , 2*self.featurizer.final_size   ))
 		i = 0
 		partial_map = {}
 		for issue in I[0][1:] :
 
 			#print( self.inverse_mapping[issue] )
 			# issue is an index
-			emb_candidate = self.data[ issue , : ].reshape( 1 ,self.emb_dim )
+			emb_candidate = self.data[ issue , : ].reshape( 1 , self.featurizer.final_size )
 
 			data_point = np.hstack( [ vector , emb_candidate ] )
 			data_lgb[ i , : ] = data_point
@@ -96,26 +100,29 @@ class DataManager():
 			if issue in self.inverse_mapping:
 				found_issues.append( self.inverse_mapping[issue]  )
 
-
+		# return the list of found ids 
 		return found_issues
 
-	def find_by_new( self , openreqJson ):
+	def find_by_new( self , openreqJson , k = 1000 , k2 = 15  ):
 
-		# this assumes a openredJson with the fields:
+		# openredJson must be a valid openreqJson 
 		newId = openreqJson["id"]
 
-		if newId in self.mappings: # no es nuevo en realidad
+		# if the ID exists in the mappings run the 
+		if newId in self.mappings: 
 
-			return self.find_by_id( newId )
+			return self.find_by_id( newId , k , k2  )
 
-		#embedding = self.get_single_embedding( openreqJson )
+		# Get the embedding for the new json
 		embedding = self.featurizer.featurize( openreqJson )
+
 		if embedding is None :
-			# Something happend and
+			# is the embedding is null 
 			return []
 		else:
+			embedding = self.norm_vec( embedding )
 			self.add_new_embedding_index( embedding , newId  )
-			issues = self.find_by_id( newId )
+			issues = self.find_by_id( newId  , k , k2 )
 
 			return issues
 
@@ -127,58 +134,49 @@ class DataManager():
 		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
 
 		#rebuild index 
-		self.index = faiss.IndexFlatL2( self.emb_dim  )
+		self.index = faiss.IndexFlatL2( self.featurizer.final_size  )
 		self.index.add( self.data )
 
 		self.indexSize = self.indexSize + 1 
 		self.mappings[ newId ] = self.indexSize 
 		self.inverse_mapping[ self.indexSize ] = newId 
 
-		pickle.dump( self.mappings ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
+		# update mappings 
+		pickle.dump( self.mappings ,   open( self.mappings_path ) , protocol=2 )
 
 
-	def loadGloveModel( self , gloveFile):
-
-		print("Loading Glove Model")
-		f = open(gloveFile,'r')
-		model = {}
-		for line in f:
-			splitLine = line.split()
-			word = splitLine[0]
-			embedding = np.array([float(val) for val in splitLine[1:]])
-			model[word] = embedding
-		print("Done.",len(model)," words loaded!")
-		return model
-
-	def process_files( self , gloveFile ):
+	def process_files( self   ):
 	    # this function saves on disk the mappings in between the vector embeddings and the 
 	    # List existing files on data folder , 
+	    
+	    
+	    if os.path.isfile( self.hdf_path ):
 
-	    if os.path.isfile( "./data/hdf_emb.h5" ):
-
-	    	self.mappings = pickle.load( open( "./data/mappings200.map" , "rb") )
+	    	self.mappings = pickle.load( open( self.mappings_path , "rb") )
 	    	self.inverse_mapping = {v: k for k, v in self.mappings.items()}
-	    	self.featurizer = pickle.load( open("./data/featurizer.ft" , "rb"))
+	    	self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
 	    	self.loadHDF5()
 	    	print( "File already exists ! loaded ")
 
 	    else:
 
 
-			files = os.listdir( "./data/")
-			files_json = [ "./data/"+f for f in files if ".json" in f ]
-			print("aaasdadas")
+			files = os.listdir( self.jsons_path )
+			files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+			print("Processing Json Files")
 			embs , mapp = self.get_embeddings( files_json  )
 			self.mappings = mapp
 			self.inverse_mapping = {v: k for k, v in self.mappings.items() }
 
-			embs = np.array( embs )
-			print("wtf men  ")
-			print("asdads")
-			pickle.dump( mapp ,   open( "./data/mappings200.map", "wb" ) , protocol=2 )
-			#np.save( "./data/embbedings200.npy" , embs   )
+			# load an embeddings array 
 
-			hdf5_embedd_file = tables.open_file(  "./data/hdf_emb.h5" , mode='w')
+			embs = np.array( embs )
+			# save mappings to disk 
+
+			pickle.dump( mapp ,   open( self.mappings_path, "wb" ) , protocol=2 )
+
+
+			hdf5_embedd_file = tables.open_file(  self.hdf_path , mode='w')
 			a = tables.Atom.from_dtype( np.dtype('<f8'), dflt=0.0 )
 			shape = ( 0 , )
 			earray = hdf5_embedd_file.create_earray(hdf5_embedd_file.root,'data', a ,shape,"Embeddings")
@@ -196,7 +194,7 @@ class DataManager():
 
 	def loadHDF5( self ):
 
-		f = tables.open_file( "./data/hdf_emb.h5" , mode = "a")
+		f = tables.open_file( self.hdf_path , mode = "a")
 		self.hdf5_file = f
 		self.data_elastic = self.hdf5_file.root.data 
 		self.data = self.hdf5_file.root.data[:]
@@ -243,7 +241,7 @@ class DataManager():
 		self.featurizer = featurizer.Featurizer( self.model_fasttext.model , self.model_fasttext.dim  , encoder_status , encoder_type)
 
 		all_embeddings , mapping = self.featurizer.featurize_reqs( all_reqs )
-		pickle.dump( self.featurizer ,   open( "./data/featurizer.ft", "wb" ) , protocol=2 )
+		pickle.dump( self.featurizer ,   open( self.featurizer_path , "wb" ) , protocol=2 )
 
 		return all_embeddings , mapping 
 
@@ -364,9 +362,21 @@ class DataManager():
 		#print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
 		#print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
 
+#####################
+#### DEPRECATED #####
+#####################
+	def loadGloveModel( self , gloveFile):
 
-
-
+		print("Loading Glove Model")
+		f = open(gloveFile,'r')
+		model = {}
+		for line in f:
+			splitLine = line.split()
+			word = splitLine[0]
+			embedding = np.array([float(val) for val in splitLine[1:]])
+			model[word] = embedding
+		print("Done.",len(model)," words loaded!")
+		return model
 
 
 
