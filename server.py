@@ -2,7 +2,7 @@
 # from app import application
 # Example:
 
-from fast_search import app
+from palmu import app
 
 # Import CherryPy
 import cherrypy
