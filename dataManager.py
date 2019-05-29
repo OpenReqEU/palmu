@@ -146,19 +146,17 @@ class DataManager():
 
 
 	def process_files( self   ):
-	    # this function saves on disk the mappings in between the vector embeddings and the 
-	    # List existing files on data folder , 
-	    
-	    
-	    if os.path.isfile( self.hdf_path ):
+		# this function saves on disk the mappings in between the vector embeddings and the 
+		# List existing files on data folder , 
+		if os.path.isfile( self.hdf_path ):
 
-	    	self.mappings = pickle.load( open( self.mappings_path , "rb") )
-	    	self.inverse_mapping = {v: k for k, v in self.mappings.items()}
-	    	self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
-	    	self.loadHDF5()
-	    	print( "File already exists ! loaded ")
+			self.mappings = pickle.load( open( self.mappings_path , "rb") )
+			self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+			self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
+			self.loadHDF5()
+			print( "File already exists ! loaded ")
 
-	    else:
+		else:
 
 
 			files = os.listdir( self.jsons_path )
@@ -248,7 +246,7 @@ class DataManager():
 	def get_reqs( self , file ):
 	    
 		data = ""
-		with open( file , "r") as f:
+		with open( file , "r" , encoding = "utf-8") as f:
 			data = f.read()
 
 			data = json.loads( data )

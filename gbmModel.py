@@ -3,7 +3,7 @@
 import lightgbm as lgb 
 import os
 import numpy as np 
-import cPickle
+import pickle
 
 
 class GBMModel( ):
@@ -34,7 +34,7 @@ class GBMModel( ):
 			self.models.append( l )
 
 		with open( self.path + "/logistic.pkl" , 'rb') as fid:
-			self.logistic = cPickle.load(fid)
+			self.logistic = pickle.load(fid)
 
 		return True
 

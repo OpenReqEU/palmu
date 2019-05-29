@@ -29,7 +29,8 @@ class Featurizer( ):
 
 	def featurize_reqs( self , reqs ):
 
-		#output = np.zeros( ( len( reqs ) , self.final_size   ) )
+		# Inputs : a list of valid openreqJson items
+
 		mapp = {}
 		output = []
 		i = 0 
@@ -42,7 +43,7 @@ class Featurizer( ):
 				i = i + 1 
 
 		output = np.array( output ) 
-		print( "shape embeddings" ,  output.shape )
+		print( "Shape embeddings" ,  output.shape )
 		return output , mapp 
 
 	def featurize( self , req ):
@@ -137,7 +138,7 @@ class Featurizer( ):
 		embs = np.zeros( (self.dim))
 		for word in text_list:
 			if word in model.keys():
-	 			emb = self.word_model[word]
+				emb = self.word_model[word]
 				embs += emb 
 		embs = embs / (len( text_list ) + 1 )
 		return embs
@@ -145,8 +146,13 @@ class Featurizer( ):
 	def text_clean( self , text ):
 	
 		text = text.lower()
-		text = text.encode("utf-8" , "ignore")
-		text = text.translate( string.maketrans("",""), string.punctuation  )
+		#text = text.encode("utf-8" , "ignore")
+		#print( type( text ))
+		#text = text.translate( str.maketrans("",""), string.punctuation  )
+		#text = text.translate(str.maketrans('', '', string.punctuation))
+		#table = str.maketrans({key: None for key in string.punctuation})
+		translator= text.maketrans('','' ,string.punctuation)
+		text = text.translate(translator)   
 		#print(text)
 		return text 
 

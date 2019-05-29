@@ -1,44 +1,24 @@
-FROM frolvlad/alpine-glibc:alpine-3.9
+FROM ubuntu:18.04
 
-ENV CONDA_DIR="./conda"
-ENV PATH="$CONDA_DIR/bin:$PATH"
+RUN apt-get update &&   apt-get install -y  gcc libhdf5-serial-dev libblas-dev liblapack-dev git python-pip python-dev python3-pip python3-dev libc-dev build-essential libpcre3-dev python3 python3-venv swig python3.6-dev libpython3-dev libpython-dev python-numpy python3-numpy &&  python -c "import sysconfig; print(sysconfig.get_path('include'))"  && git clone https://github.com/facebookresearch/faiss.git && cd faiss && ./configure --without-cuda --with-python=python3 &&  make  &&  make install &&  cd python && make && make install
 
-# Install conda
-RUN CONDA_VERSION="4.5.12" && \
-    CONDA_MD5_CHECKSUM="866ae9dff53ad0874e1d1a60b1ad1ef8" && \
-    \
-    apk add --no-cache --virtual=.build-dependencies wget ca-certificates bash && \
-    \
-    mkdir -p "$CONDA_DIR" && \
-    wget "http://repo.continuum.io/miniconda/Miniconda3-${CONDA_VERSION}-Linux-x86_64.sh" -O miniconda.sh && \
-    echo "$CONDA_MD5_CHECKSUM  miniconda.sh" | md5sum -c && \
-    bash miniconda.sh -f -b -p "$CONDA_DIR" && \
-    echo "export PATH=$CONDA_DIR/bin:\$PATH" > /etc/profile.d/conda.sh && \
-    rm miniconda.sh && \
-    \
-    conda update --all --yes && \
-    conda config --set auto_update_conda False && \
-    rm -r "$CONDA_DIR/pkgs/" && \
-    \
-    apk del --purge .build-dependencies && \
-    \
-    mkdir -p "$CONDA_DIR/locks" && \
-    chmod 777 "$CONDA_DIR/locks"
 
-ADD fast_search.py /
+COPY . /app
+WORKDIR /app
 
-ADD prepare_data.py /
+#ENV VIRTUAL_ENV=/opt/venv
+#CMD pip install --upgrade pip
+#CMD pip3 install virtualenv
+#RUN python3 -m venv $VIRTUAL_ENV
+#ENV PATH="$VIRTUAL_ENV/bin:$PATH" 
 
-ADD server.py /
 
-ADD data /data
+#CMD mkdir virtual-env && cd virtual-env
+#CMD python3 -m venv env 
+#CMD source env/bin/activate
 
-RUN apk add --no-cache bash  
-
-RUN wget http://nlp.stanford.edu/data/glove.6B.zip && unzip -jo glove.6B.zip glove.6B.200d.txt -d data && rm glove.6B.zip
-
-RUN conda update conda && conda install python && conda install faiss-cpu -c pytorch  && conda install -c anaconda pandas && conda install flask && conda install cherrypy && python prepare_data.py
+RUN pip3 install -r requirements.txt
 
 EXPOSE 9210
 
-CMD python3 server.py
+CMD ["python3" , "server.py" ]
