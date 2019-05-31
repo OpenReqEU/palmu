@@ -29,30 +29,41 @@ dm = DataManager( jsons_path = "./data" , model_fasttext = FAST_TEXT_MODEL  , lg
 @app.route("/getRelated", methods=['GET'])
 def main():
 
-    idd = request.args.get('id')
+	idd = request.args.get('id')
+	k = request.args.get("k")
 
-    if idd is None:
-    	return {}
+	if k == None:
+		k = 5
+	else:
+		k = int( k )
+	if idd is None:
+		return {}
 
     #print( "Query issue: " , idd )
-    similar_issues = dm.find_by_id( idd , k = 10 ) 
-    if similar_issues  == []:
-        return {}
+	similar_issues = dm.find_by_id( idd , k = k ) 
+	if similar_issues  == []:
+		return {}
 
-    return json.dumps(similar_issues)
+	return json.dumps(similar_issues)
 
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
 
 	# read request 
 	req = request.get_json()
-	similar_issues = dm.find_by_new( req )
+
+	k = req["k"]
+	if k == None:
+		k = 5
+	else:
+		k = int( k )
+	similar_issues = dm.find_by_new( req , k  )
 
 	if similar_issues == []:
 
 		return {}
-
-
+      
+    
 	return json.dumps( similar_issues ) 
 
 @app.route("/postProject", methods=['POST'])
