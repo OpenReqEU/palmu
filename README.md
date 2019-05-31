@@ -30,15 +30,20 @@ docker run -p 9210:9210 palmu
 
 ## How to Use This Microservice
 
-GET hostname:9210/getRelated?id={issueId}
+GET hostname:9210/getRelated?id={issueId}k={}
 
-Returns a String list of closest related issue IDs (requires projects posted)
+Returns a String list of  _k_ closest related issues to the given issueId  (requires projects posted)
 
 POST hostname:9210/postProject
 
 (project JSON in request body)
 
 Post a new project to Palmu
+
+POST hostname:9210/newIssue 
+
+valid OpenReq JSON must be in the request. The system will add this new data point to the current database and then perfom the search. 
+
 
 
 ## Notes for Developers
