@@ -40,11 +40,18 @@ def main():
 		return {}
 
     #print( "Query issue: " , idd )
-	similar_issues = dm.find_by_id( idd , k = k ) 
-	if similar_issues  == []:
-		return {}
+	similar_issues = dm.find_by_id( idd , k = k )
 
-	return json.dumps(similar_issues)
+	results = {}
+
+
+	if similar_issues  == []:
+		results["similar_issues"] = []
+		return json.dumps( results )
+
+	results["similar_issues"] = similar_issues 
+
+	return json.dumps(results)
 
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
