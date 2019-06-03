@@ -9,6 +9,8 @@ import pickle
 import tables
 import faiss 
 import featurizer , fastTextUtils , gbmModel 
+import requests
+
 
 class DataManager():
 
@@ -37,8 +39,19 @@ class DataManager():
 		#l = self.find_by_id( "QTWB-30" )
 		#print(l)
 		#self.test_accuracy()
+		self.milla_url = "https://api.openreq.eu/milla/otherDetectionService"
 		return None
 
+	def load_from_milla( self , projectId , url ):
+		# url : url to palmu 
+		# projectId 
+
+		params = { "projectId":  projectId , "url" : url }
+		headers = {'content-type': 'application/json'}
+
+		r = requests.get( url = self.milla_url , params = params )
+
+		return True 
 	def buildIndex( self ):
 		#builds the search index 
 
