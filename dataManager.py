@@ -51,6 +51,8 @@ class DataManager():
 
 		r = requests.get( url = self.milla_url , params = params )
 
+		# milla will send the data to the given url 
+		
 		return True 
 	def buildIndex( self ):
 		#builds the search index 
