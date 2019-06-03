@@ -36,7 +36,7 @@ class DataManager():
 		
 		#l = self.find_by_id( "QTWB-30" )
 		#print(l)
-		#self.test_accuracy()
+		self.test_accuracy()
 		return None
 
 	def buildIndex( self ):
