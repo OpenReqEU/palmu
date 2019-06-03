@@ -1,0 +1,7 @@
+pandas
+scikit-learn
+gensim 
+flask
+cherrypy
+tables
+lightgbm
