@@ -1,0 +1,117 @@
+swagger: "2.0"
+info:
+  description: "Palmu is a requirements detection service build  for the OpenReq project"
+  version: "1.0.0"
+  title: "Palmu"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "apiteam@swagger.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "petstore.swagger.io"
+basePath: "/v2"
+tags:
+- name: "Palmu"
+  description: "Requirement detection"
+  externalDocs:
+    description: "Find out more"
+    url: "http://swagger.io"
+schemes:
+- "https"
+- "http"
+paths:
+  /getRelated:
+    get:
+      tags:
+      - "Palmu"
+      summary: "Get related issues for a given query"
+      description: ""
+      operationId: "getRelated"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "The body contains an id (string) and k ( integer) number of issues to retrieve"
+        required: true
+        schema:
+          $ref: "#/definitions/queryIssueObject"
+      responses:
+        405:
+          description: "Invalid input"
+      security:
+      - petstore_auth:
+        - "write:pets"
+        - "read:pets"
+  /newIssues:
+    post:
+      tags:
+      - "Palmu"
+      summary: "Query and add a new issue to the data"
+      description: "Query a new issue and add the corresponding embedding to the data base for future queries"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "the issue parameter contains a valid OpenReqJson and k is an integer for the number of similar issues to retrieve."
+        required: true
+        schema:
+          $ref: "#/definitions/newIssueObject"
+
+      responses:
+        200:
+          description: "successful operation"
+        400:
+          description: "Invalid status value"
+  /postProject:
+    post:
+      tags:
+      - "Palmu"
+      summary: "Post new projects to the Palmu database"
+      description: "This endpoint recieves as a parameter a valid OpenReq Json with new requeriments to be added to the database"
+      responses:
+        200:
+          description: "successfull operation"
+
+securityDefinitions:
+  petstore_auth:
+    type: "oauth2"
+    authorizationUrl: "http://petstore.swagger.io/oauth/dialog"
+    flow: "implicit"
+    scopes:
+      write:pets: "modify pets in your account"
+      read:pets: "read your pets"
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+definitions:
+  queryIssueObject:
+    type: "object"
+    properties:
+      id: 
+        type: "string"
+      k:
+        type: "integer"
+        format: "int64"
+  newIssueObject:
+    type: "object"
+    properties:
+      issue:
+        type: "object"
+      k: 
+        type: "integer"
+        format: "int64"
+  listIssues:
+    type: "object"
+    properties:
+      similar:
+        type: "object"
+      
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
