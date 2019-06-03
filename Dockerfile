@@ -6,6 +6,8 @@ RUN apt-get update &&   apt-get install -y  gcc libhdf5-serial-dev libblas-dev l
 COPY . /app
 WORKDIR /app
 
+ADD https://drive.google.com/file/d/1Y1rRyQN8DyZbtnUmIYuYXr08ZF8f-jSS/view?usp=sharing $WORKDIR/data/wordEmbedding/
+
 #ENV VIRTUAL_ENV=/opt/venv
 #CMD pip install --upgrade pip
 #CMD pip3 install virtualenv
