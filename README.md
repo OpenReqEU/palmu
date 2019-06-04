@@ -26,7 +26,7 @@ docker build . -t palmu
 
 then
 
-docker run -p 9210:9210 palmu
+docker run -p 9210:9210 --name palmu palmu
 
 ## How to Use This Microservice
 
