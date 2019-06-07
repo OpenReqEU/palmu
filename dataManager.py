@@ -40,7 +40,7 @@ class DataManager():
 		#print(l)
 		#self.test_accuracy()
 
-
+		self.load_projects2()
 		return None
 
 	def get_projects(self ):
@@ -54,11 +54,18 @@ class DataManager():
 			"QTJIRA",
 			"QTCREATORBUG",
 			"QTBUG" ]
-		return projects[:1]
+		return  [ "QTWB"]  #projects[:1]
+
+	def load_projects2(self ):
+
+		self.process_files( refresh = True) 
+		self.indexSize = 0 
+		self.buildIndex()
+		self.indexSize = self.data.shape[0] - 1 
 
 	def load_projects( self ):
 		#self.load_from_milla( "QTWB" )
-		return True 
+		#return True 
 		# get project 
 		for project in self.get_projects():
 			print( "Loading project: {}".format( project ) )
@@ -77,12 +84,13 @@ class DataManager():
 	def load_from_milla( self , projectId   ):
 		# url : url to palmu 
 		# projectId 
-
+		headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
 		params = { "projectId":  projectId , "url" : self.palmu_url + "/postProject" }
 		headers = {'content-type': 'application/json'}
-
-		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params )
-		print( r.body )
+		print("requeeeest")
+		print( params )
+		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params    )
+		print( r.json() )
 		
 		# milla will send the data to the given url 
 		

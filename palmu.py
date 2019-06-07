@@ -103,13 +103,13 @@ def post_project():
     #return "ok"
     data= { "status" : "ok"}
 
-    dm.process_files()
+    dm.process_files( refresh = True)
     return jsonify( data )
 
 @app.before_first_request
 def before():
-	dm.load_projects()
-	print("asdasd")
+	#dm.load_projects()
+	print("projects loaded")
 #app.before_first_request( prepare_data.onstart() )
 
 if __name__ == '__main__':
