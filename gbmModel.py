@@ -58,7 +58,7 @@ class GBMModel( ):
 
 		y_preds  = self.logistic.predict_proba( y_preds.reshape(  (-1 , 1 ))  )[: , 1 ]
 		#clf.predict_proba( calibration_data)[:,1]
-		indexs = y_preds.argsort()[-20:][::-1]
+		indexs = y_preds.argsort()[-k:][::-1]
 		#indexs =   np.where( y_preds == 1.0 )[0]   #y_preds.argsort()[-k:][::-1]
 		#print( len( indexs )  )
 		#print( len( indexs ) )

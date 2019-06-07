@@ -29,28 +29,61 @@ class DataManager():
 		self.hdf_path = self.jsons_path + "/hdf_emb.h5"
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
-
-
-		self.process_files(  )
-		self.indexSize = 0 
-		self.buildIndex()
-		self.indexSize = self.data.shape[0] - 1 
-		
+		self.milla_url = "http://0.0.0.0:9203" #/otherDetectionService"
+		self.palmu_url = "http://0.0.0.0:9210" # /postProjec"
+		self.mallikas_url = "https://api.openreq.eu/mallikas"
+		# fetch file
+		#self.load_projects()
+		# process file 
+		#self.process_files( refresh = True )
 		#l = self.find_by_id( "QTWB-30" )
 		#print(l)
 		#self.test_accuracy()
-		self.milla_url = "https://api.openreq.eu/milla/otherDetectionService"
+
+
 		return None
 
-	def load_from_milla( self , projectId , url ):
+	def get_projects(self ):
+		projects = [  
+		"QTWB",
+			"QDS",
+			"QTPLAYGROUND",
+			"QT3DS",
+			"QBS",
+			"QTWB",
+			"QTJIRA",
+			"QTCREATORBUG",
+			"QTBUG" ]
+		return projects[:1]
+
+	def load_projects( self ):
+		#self.load_from_milla( "QTWB" )
+		return True 
+		# get project 
+		for project in self.get_projects():
+			print( "Loading project: {}".format( project ) )
+
+			self.load_from_milla( project )
+
+		self.process_files( refresh = True )
+
+		print( "index building")
+
+		self.indexSize = 0 
+		self.buildIndex()
+		self.indexSize = self.data.shape[0] - 1 
+
+		print (" index adsasd")
+	def load_from_milla( self , projectId   ):
 		# url : url to palmu 
 		# projectId 
 
-		params = { "projectId":  projectId , "url" : url }
+		params = { "projectId":  projectId , "url" : self.palmu_url + "/postProject" }
 		headers = {'content-type': 'application/json'}
 
-		r = requests.get( url = self.milla_url , params = params )
-
+		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params )
+		print( r.body )
+		
 		# milla will send the data to the given url 
 		
 		return True 
@@ -160,9 +193,15 @@ class DataManager():
 		pickle.dump( self.mappings ,   open( self.mappings_path ) , protocol=2 )
 
 
-	def process_files( self   ):
+	def process_files( self , refresh = False   ):
 		# this function saves on disk the mappings in between the vector embeddings and the 
 		# List existing files on data folder , 
+
+		if refresh:
+			print( "REFRESHING DATA ")
+			if os.path.exists( self.hdf_path ):
+				os.remove( self.hdf_path )
+
 		if os.path.isfile( self.hdf_path ):
 
 			self.mappings = pickle.load( open( self.mappings_path , "rb") )
@@ -258,6 +297,11 @@ class DataManager():
 
 		return all_embeddings , mapping 
 
+	def add_new_project_from_file( self , filename):
+
+
+		return True
+
 	def get_reqs( self , file ):
 	    
 		data = ""
@@ -304,7 +348,7 @@ class DataManager():
 	def test_accuracy( self ):
 
 		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
-		df = df[:]
+		df = df[:500]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
 

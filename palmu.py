@@ -12,6 +12,7 @@ import os
 import json
 from flask import Flask
 from flask import request
+from flask import jsonify 
 
 from dataManager import DataManager
 app = Flask(__name__)
@@ -77,8 +78,10 @@ def new_issue():
 def post_project():
 
     data = request.get_json()
+    print(data)
+
     if data is None:
-        return {}
+        return jsonify( {"status" :  "ok"} )
 
 
     project_name = data["projects"][0]["id"]
@@ -95,11 +98,18 @@ def post_project():
         json.dump(data, json_file)
         json_file.close()
 
-    prepare_data.process_files()
 
-    return { "status" : "ok"}
+    #dm.process_files( path , refresh = True )
+    #return "ok"
+    data= { "status" : "ok"}
 
+    dm.process_files()
+    return jsonify( data )
 
+@app.before_first_request
+def before():
+	dm.load_projects()
+	print("asdasd")
 #app.before_first_request( prepare_data.onstart() )
 
 if __name__ == '__main__':
@@ -107,4 +117,4 @@ if __name__ == '__main__':
 	#prepare_data.onstart()
 
 	app.run(host='0.0.0.0')
-	#app.before_first_request( prepare_data.onstart()  )
+	#app.before_first_request( prepare_data.oad_projects()  )
