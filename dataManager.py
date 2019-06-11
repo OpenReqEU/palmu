@@ -27,21 +27,29 @@ class DataManager():
 		# creating auxiliar paths 
 		self.jsons_path = jsons_path
 		self.hdf_path = self.jsons_path + "/hdf_emb.h5"
+		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
 		self.milla_url = "http://0.0.0.0:9203" #/otherDetectionService"
 		self.palmu_url = "http://0.0.0.0:9210" # /postProjec"
 		self.mallikas_url = "https://api.openreq.eu/mallikas"
-		# fetch file
-		#self.load_projects()
-		# process file 
-		#self.process_files( refresh = True )
-		#l = self.find_by_id( "QTWB-30" )
-		#print(l)
-		#self.test_accuracy()
 
-		self.load_projects2()
+		#self.post_to_milla( code ="ok" )
+
 		return None
+
+	def post_to_milla( self , code = "ok" ):
+
+		print("POST STUFF TO MILLA WHEN READY")
+		return("ok")
+		headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
+		params = { "status":  code  }
+		headers = {'content-type': 'application/json' }
+
+		r = requests.post( url = self.milla_url + "/palmuInterface" , data = params    )
+
+		return r 
+
 
 	def get_projects(self ):
 		projects = [  
@@ -86,7 +94,7 @@ class DataManager():
 		# projectId 
 		headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
 		params = { "projectId":  projectId , "url" : self.palmu_url + "/postProject" }
-		headers = {'content-type': 'application/json'}
+		headers = {'content-type': 'application/json' }
 		print("requeeeest")
 		print( params )
 		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params    )
@@ -208,6 +216,8 @@ class DataManager():
 		if refresh:
 			print( "REFRESHING DATA ")
 			if os.path.exists( self.hdf_path ):
+				if self.hdf5_file is not None:
+					self.hdf5_file.close()
 				os.remove( self.hdf_path )
 
 		if os.path.isfile( self.hdf_path ):

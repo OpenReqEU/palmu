@@ -14,18 +14,68 @@ from flask import Flask
 from flask import request
 from flask import jsonify 
 
+from celery import Celery 
+
 from dataManager import DataManager
+
+def make_celery( app ):
+	celery = Celery(
+		app.import_name , 
+		backend = app.config["CELERY_RESULT_BACKEND"] ,  
+		broker = app.config["CELERY_BROKER_URL"]
+		)
+
+	celery.conf.update( app.config )
+
+	class ContextTask( celery.Task ):
+
+		def __call__(self , *args , **kwargs):
+			with app.app_context():
+				return self.run( *args , **kwargs )
+
+	celery.Task = ContextTask
+	return celery
+
+
 app = Flask(__name__)
+app.config.update(
+	CELERY_BROKER_URL = "redis://localhost:6379",
+	CELERY_RESULT_BACKEND = "redis://localhost:6379" 
 
-parser = argparse.ArgumentParser(description=' Get similar reports from jira data')
+	)
 
-parser.add_argument('--id', type =str , required = True )
+celery = make_celery(app)
+
+
+
 
 
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
 
 dm = DataManager( jsons_path = "./data" , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
+
+#### END POINTS AND CELERY TASKS 
+
+@celery.task()
+def run_cel():
+
+	for i in range(1000):
+		print("asdasdasdasdasd")
+
+	return 0
+@celery.task()
+def process_json_files():
+
+	dm.process_files(refresh = True)
+	dm.post_to_milla("OK")
+	return "ok"
+
+@app.route("/testCelery" , methods= ["GET"])
+def test():
+	result = run_cel.delay( )
+	return "Nice"
+
 
 @app.route("/getRelated", methods=['GET'])
 def main():
@@ -83,6 +133,7 @@ def post_project():
     if data is None:
         return jsonify( {"status" :  "ok"} )
 
+    dm.post_to_milla( "working" )
 
     project_name = data["projects"][0]["id"]
 
@@ -102,8 +153,11 @@ def post_project():
     #dm.process_files( path , refresh = True )
     #return "ok"
     data= { "status" : "ok"}
+    print("FILE WRITTEN")
+    #dm.process_files( refresh = True)
+    # run the async celery task 
+    #process_json_files.delay()
 
-    dm.process_files( refresh = True)
     return jsonify( data )
 
 @app.before_first_request
