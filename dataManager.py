@@ -35,7 +35,9 @@ class DataManager():
 		self.mallikas_url = "https://api.openreq.eu/mallikas"
 
 		#self.post_to_milla( code ="ok" )
-
+		print("NICe")
+		self.load_projects2()
+		#self.process_files()
 		return None
 
 	def post_to_milla( self , code = "ok" ):
@@ -66,7 +68,7 @@ class DataManager():
 
 	def load_projects2(self ):
 
-		self.process_files( refresh = True) 
+		self.process_files( refresh = False ) 
 		self.indexSize = 0 
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
@@ -263,7 +265,9 @@ class DataManager():
 			#atom=tb.StringAtom(itemsize=8)
 
 	def loadHDF5( self ):
-
+		self.mappings = pickle.load( open( self.mappings_path , "rb") )
+		self.inverse_mapping = {v: k for k, v in self.mappings.items()}
+		self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
 		f = tables.open_file( self.hdf_path , mode = "a")
 		self.hdf5_file = f
 		self.data_elastic = self.hdf5_file.root.data 
@@ -271,7 +275,7 @@ class DataManager():
 		self.data = np.array( self.data ).astype( np.float32 )
 		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
 
-
+		print("loadddeddd stufff")
 
 	def get_embeddings( self ,  files_json  ):
 		# return the 
@@ -285,7 +289,7 @@ class DataManager():
 
 		all_reqs = []
 		for file in files_json:
-			print( file )
+			#print( file )
 			requirements = self.get_reqs( file )
 			all_reqs = all_reqs + requirements 
 
@@ -327,7 +331,7 @@ class DataManager():
 			data = f.read()
 
 			data = json.loads( data )
-			print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
+			#print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
 		return data["requirements"]
 	        
 	def test( self ) :

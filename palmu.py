@@ -15,6 +15,7 @@ from flask import request
 from flask import jsonify 
 
 from celery import Celery 
+from celery.signals import after_task_publish,task_success,task_prerun,task_postrun , task_success
 
 from dataManager import DataManager
 
@@ -64,12 +65,19 @@ def run_cel():
 		print("asdasdasdasdasd")
 
 	return 0
-@celery.task()
+@celery.task(  callback = dm.loadHDF5 )
 def process_json_files():
 
 	dm.process_files(refresh = True)
-	dm.post_to_milla("OK")
+	dm.loadHDF5()
+	#dm.post_to_milla("OK")
 	return "ok"
+
+@task_success.connect
+def task_success_handler(sender, result, **kwargs):
+	dm.loadHDF5()
+	print("Sucesss task")
+
 
 @app.route("/testCelery" , methods= ["GET"])
 def test():
@@ -128,7 +136,7 @@ def new_issue():
 def post_project():
 
     data = request.get_json()
-    print(data)
+    #print(data)
 
     if data is None:
         return jsonify( {"status" :  "ok"} )
@@ -156,8 +164,9 @@ def post_project():
     print("FILE WRITTEN")
     #dm.process_files( refresh = True)
     # run the async celery task 
-    #process_json_files.delay()
-
+    process_json_files.delay()
+    #print( result.wait() ) 
+    #print("Ejecutadoooooo ")
     return jsonify( data )
 
 @app.before_first_request

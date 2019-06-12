@@ -1,4 +1,5 @@
 pandas
+celery
 scikit-learn
 gensim 
 flask
