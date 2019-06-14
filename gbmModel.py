@@ -15,9 +15,9 @@ class GBMModel( ):
 		self.path = path
 		self.name = name 
 		self.models = []
-
+		print("Loading LGB models")
 		self.load_models()
-		print( len( self.models ) )
+		#print( len( self.models ) )
 
 		return 
 
@@ -64,7 +64,8 @@ class GBMModel( ):
 		#print( len( indexs ) )
 		#indexs =   y_preds.argsort()[-20:][::-1]
 		#print( "valids:" , indexs )
-		return indexs 
+		print("maaaaaaax" ,  y_preds.max( ))
+		return indexs  , y_preds[ indexs ]
 
 
 

@@ -13,7 +13,7 @@ import json
 from flask import Flask
 from flask import request
 from flask import jsonify 
-
+import requests
 from celery import Celery 
 from celery.signals import after_task_publish,task_success,task_prerun,task_postrun , task_success
 
@@ -40,13 +40,13 @@ def make_celery( app ):
 
 app = Flask(__name__)
 app.config.update(
-	CELERY_BROKER_URL = "redis://localhost:6379",
-	CELERY_RESULT_BACKEND = "redis://localhost:6379" 
+	CELERY_BROKER_URL = "redis://127.0.0.1:6379",
+	CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379" 
 
 	)
 
 celery = make_celery(app)
-
+#celery.control.purge()
 
 
 
@@ -58,26 +58,18 @@ dm = DataManager( jsons_path = "./data" , model_fasttext = FAST_TEXT_MODEL  , lg
 
 #### END POINTS AND CELERY TASKS 
 
-@celery.task()
-def run_cel():
-
-	for i in range(1000):
-		print("asdasdasdasdasd")
-
-	return 0
 @celery.task(  callback = dm.loadHDF5 )
 def process_json_files():
 
 	dm.process_files(refresh = True)
-	dm.loadHDF5()
+	headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
+	params = { "status":  "200"  }
+	headers = {'content-type': 'application/json' }
+	print( "cosas chidas")
+	r = requests.post( url = "http://0.0.0.0:9210/load" , data = params   )
 	#dm.post_to_milla("OK")
+	print(r)
 	return "ok"
-
-@task_success.connect
-def task_success_handler(sender, result, **kwargs):
-	dm.loadHDF5()
-	print("Sucesss task")
-
 
 @app.route("/testCelery" , methods= ["GET"])
 def test():
@@ -101,16 +93,14 @@ def main():
     #print( "Query issue: " , idd )
 	similar_issues = dm.find_by_id( idd , k = k )
 
-	results = {}
 
+	#if similar_issues  == []:
+	#	results["similar_issues"] = []
+	#	return json.dumps( results )
 
-	if similar_issues  == []:
-		results["similar_issues"] = []
-		return json.dumps( results )
+	#results["similar_issues"] = similar_issues 
 
-	results["similar_issues"] = similar_issues 
-
-	return json.dumps(results)
+	return json.dumps( similar_issues )
 
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
@@ -169,10 +159,12 @@ def post_project():
     #print("Ejecutadoooooo ")
     return jsonify( data )
 
-@app.before_first_request
-def before():
-	#dm.load_projects()
-	print("projects loaded")
+@app.route("/load", methods=['POST'])
+def load():
+	print("Cosas chidas")
+	dm.loadHDF5()
+	dm.buildIndex()
+	return jsonify( {"status":"ok"})
 #app.before_first_request( prepare_data.onstart() )
 
 if __name__ == '__main__':

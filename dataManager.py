@@ -9,8 +9,23 @@ import pickle
 import tables
 import faiss 
 import featurizer , fastTextUtils , gbmModel 
-import requests
 
+
+"""
+[
+  {
+    "created_at": 0,
+    "dependency_score": 0,
+    "dependency_type": "CONTRIBUTES",
+    "description": [
+      "string"
+    ],
+    "fromid": "string",
+    "id": "string",
+    "status": "PROPOSED",
+    "toid": "string"
+  }
+"""
 
 class DataManager():
 
@@ -68,7 +83,8 @@ class DataManager():
 
 	def load_projects2(self ):
 
-		self.process_files( refresh = False ) 
+		self.process_files( refresh = False )
+		self.loadHDF5()
 		self.indexSize = 0 
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
@@ -159,17 +175,35 @@ class DataManager():
 			i += 1 
 
 
-		top_indexs = self.model_lgbm.get_top_k( data_lgb , k = k2  )
+		top_indexs , scores = self.model_lgbm.get_top_k( data_lgb , k = k2  )
 
-		for index in top_indexs:
+
+		for index , score  in zip( top_indexs , scores ) :
 			issue = partial_map[index]
 			if issue in self.inverse_mapping:
-				found_issues.append( self.inverse_mapping[issue]  )
+				json_obj = self.parse_issue( qtid , self.inverse_mapping[issue] , score   )
+
+				found_issues.append( json_obj  )
 
 		# return the list of found ids 
 		return found_issues
 
-	def find_by_new( self , openreqJson , k = 1000 , k2 = 15  ):
+	def parse_issue( self , qtid , dup , score = ""  ):
+
+		results = {}
+		results["created_at"] = "0"
+		results["dependency_type"] = "SIMILAR"
+		results["dependency_score"] = str(score) 
+		results["description"] = ["palmu"]
+		results["fromid"] = qtid
+		results["id"] = "{}_{}_SIMILAR".format( qtid , dup )
+		results["status"] = "PROPOSED"
+		results["toid"] = dup 
+
+
+		return results
+
+	def find_by_new( self , openreqJson , k = 1000 , k2 = 11  ):
 
 		# openredJson must be a valid openreqJson 
 		newId = openreqJson["id"]
@@ -259,7 +293,7 @@ class DataManager():
 
 
 			hdf5_embedd_file.close()
-			self.loadHDF5()
+			#self.loadHDF5()
 
 			print("HDF5 FILE CREATED AND LOADED")
 			#atom=tb.StringAtom(itemsize=8)
@@ -268,6 +302,7 @@ class DataManager():
 		self.mappings = pickle.load( open( self.mappings_path , "rb") )
 		self.inverse_mapping = {v: k for k, v in self.mappings.items()}
 		self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
+		
 		f = tables.open_file( self.hdf_path , mode = "a")
 		self.hdf5_file = f
 		self.data_elastic = self.hdf5_file.root.data 
