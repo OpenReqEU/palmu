@@ -1,4 +1,4 @@
-FROM afhuertass/palmu:palmu
+FROM afhuertass/palmureq:palmureq
 EXPOSE 9210
 
 
