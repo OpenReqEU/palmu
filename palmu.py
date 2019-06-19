@@ -107,8 +107,12 @@ def new_issue():
 
 	# read request 
 	req = request.get_json()
-
-	k = req["k"]
+	k = None 
+	try:
+		k = req["k"]
+	except:
+		k = 5
+		 
 	if k == None:
 		k = 5
 	else:

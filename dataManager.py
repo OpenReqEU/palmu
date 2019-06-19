@@ -220,6 +220,9 @@ class DataManager():
 			# is the embedding is null 
 			return []
 		else:
+			
+			embedding = embedding.reshape( ( 1 , 100 ))
+			print( embedding.shape )
 			embedding = self.norm_vec( embedding )
 			self.add_new_embedding_index( embedding , newId  )
 			issues = self.find_by_id( newId  , k , k2 )
@@ -228,6 +231,7 @@ class DataManager():
 
 	def add_new_embedding_index( self , embedding , newId ) :
 
+		#prit( self.data_elastic  )
 		self.data_elastic.append( embedding )
 		self.data = self.hdf5_file.root.data[:]
 		self.data = np.array( self.data ).astype( np.float32 )
@@ -242,7 +246,7 @@ class DataManager():
 		self.inverse_mapping[ self.indexSize ] = newId 
 
 		# update mappings 
-		pickle.dump( self.mappings ,   open( self.mappings_path ) , protocol=2 )
+		pickle.dump( self.mappings ,   open( self.mappings_path , "wb" ) , protocol=2 )
 
 
 	def process_files( self , refresh = False   ):
@@ -284,11 +288,16 @@ class DataManager():
 
 			hdf5_embedd_file = tables.open_file(  self.hdf_path , mode='w')
 			a = tables.Atom.from_dtype( np.dtype('<f8'), dflt=0.0 )
-			shape = ( 0 , )
+			shape = ( 0 ,100 )
 			earray = hdf5_embedd_file.create_earray(hdf5_embedd_file.root,'data', a ,shape,"Embeddings")
-
+			print("*"*3)
+			print( earray.nrows )
+			print( earray.rowsize)
+			print( earray.atom )
 			for emb in embs:
-
+				print("adasdasda")
+				print( emb.shape )
+				emb = emb.reshape( (1 , -1) )
 				earray.append( emb )
 
 
@@ -299,13 +308,18 @@ class DataManager():
 			#atom=tb.StringAtom(itemsize=8)
 
 	def loadHDF5( self ):
+
 		self.mappings = pickle.load( open( self.mappings_path , "rb") )
 		self.inverse_mapping = {v: k for k, v in self.mappings.items()}
 		self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
 		
 		f = tables.open_file( self.hdf_path , mode = "a")
 		self.hdf5_file = f
-		self.data_elastic = self.hdf5_file.root.data 
+		self.data_elastic = self.hdf5_file.root.data
+		print("#"*10)
+		print( self.data_elastic.rowsize)
+		print( self.data_elastic.nrows )
+
 		self.data = self.hdf5_file.root.data[:]
 		self.data = np.array( self.data ).astype( np.float32 )
 		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
