@@ -99,16 +99,21 @@ def main():
 	#	return json.dumps( results )
 
 	#results["similar_issues"] = similar_issues 
-
-	return json.dumps( similar_issues )
+	results = dict()
+	results["dependencies"] = similar_issues
+	return json.dumps( results )
 
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
 
 	# read request 
 	req = request.get_json()
+	k = None 
+	try:
+		k = req["k"]
+	except:
+		k = 5
 
-	k = req["k"]
 	if k == None:
 		k = 5
 	else:
