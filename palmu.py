@@ -19,6 +19,7 @@ from celery.signals import after_task_publish,task_success,task_prerun,task_post
 
 from dataManager import DataManager
 
+local_host = "127.0.0.1"
 def make_celery( app ):
 	celery = Celery(
 		app.import_name , 
@@ -40,8 +41,8 @@ def make_celery( app ):
 
 app = Flask(__name__)
 app.config.update(
-	CELERY_BROKER_URL = "redis://127.0.0.1:6379",
-	CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379" 
+	CELERY_BROKER_URL = "redis://{}:6379".format(local_host  ),
+	CELERY_RESULT_BACKEND = "redis://{}:6379".format( local_host ) 
 
 	)
 
@@ -66,7 +67,7 @@ def process_json_files():
 	params = { "status":  "200"  }
 	headers = {'content-type': 'application/json' }
 	print( "cosas chidas")
-	r = requests.post( url = "http://0.0.0.0:9210/load" , data = params   )
+	r = requests.post( url = "http://{}:9210/load".format( local_host ) , data = params   )
 	#dm.post_to_milla("OK")
 	print(r)
 	return "ok"

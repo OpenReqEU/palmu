@@ -9,7 +9,7 @@ import pickle
 import tables
 import faiss 
 import featurizer , fastTextUtils , gbmModel 
-
+import ast
 
 """
 [
@@ -45,40 +45,27 @@ class DataManager():
 		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
-		self.milla_url = "http://0.0.0.0:9203" #/otherDetectionService"
-		self.palmu_url = "http://0.0.0.0:9210" # /postProjec"
-		self.mallikas_url = "https://api.openreq.eu/mallikas"
+		#self.milla_url = "http://0.0.0.0:9203" #/otherDetectionService"
+		#self.palmu_url = "http://0.0.0.0:9210" # /postProjec"
+		#self.mallikas_url = "https://api.openreq.eu/mallikas"
 
 		#self.post_to_milla( code ="ok" )
 		print("NICe")
 		self.load_projects2()
 		#self.process_files()
+		#self.test_accuracy()
 		return None
 
 	def post_to_milla( self , code = "ok" ):
 
-		print("POST STUFF TO MILLA WHEN READY")
-		return("ok")
-		headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
 		params = { "status":  code  }
-		headers = {'content-type': 'application/json' }
-
 		r = requests.post( url = self.milla_url + "/palmuInterface" , data = params    )
 
 		return r 
 
 
 	def get_projects(self ):
-		projects = [  
-		"QTWB",
-			"QDS",
-			"QTPLAYGROUND",
-			"QT3DS",
-			"QBS",
-			"QTWB",
-			"QTJIRA",
-			"QTCREATORBUG",
-			"QTBUG" ]
+
 		return  [ "QTWB"]  #projects[:1]
 
 	def load_projects2(self ):
@@ -110,9 +97,9 @@ class DataManager():
 	def load_from_milla( self , projectId   ):
 		# url : url to palmu 
 		# projectId 
-		headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
+		#headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
 		params = { "projectId":  projectId , "url" : self.palmu_url + "/postProject" }
-		headers = {'content-type': 'application/json' }
+		#headers = {'content-type': 'application/json' }
 		print("requeeeest")
 		print( params )
 		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params    )
@@ -187,6 +174,15 @@ class DataManager():
 
 		# return the list of found ids 
 		return found_issues
+
+	def old_implementation( self  , indxs , distances , qtid   ):
+
+
+		for  i , issue in  enumerate( indxs[0][:1] ):
+			json_obj = self.parse_issue( qtid , self.inverse_mapping )
+
+			
+
 
 	def parse_issue( self , qtid , dup , score = ""  ):
 
@@ -305,7 +301,6 @@ class DataManager():
 			#self.loadHDF5()
 
 			print("HDF5 FILE CREATED AND LOADED")
-			#atom=tb.StringAtom(itemsize=8)
 
 	def loadHDF5( self ):
 
@@ -331,7 +326,6 @@ class DataManager():
 		# id - > embeddings correspondence
 		
 		all_embeddings = []
-		comment_embeddings = [] 
 		index = 0
 		mapping = {}
 		print( files_json )
@@ -419,10 +413,10 @@ class DataManager():
 	def test_accuracy( self ):
 
 		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
-		df = df[:500]
+		df = df[:]
 		ids = df["ids"].values
 		dependencies = df["dependencies"].values
-
+		print("TEST")
 
 		results = []
 
@@ -431,6 +425,19 @@ class DataManager():
 		ks = [ 100 , 1000  ]
 
 		k100_tp = []
+
+		true_positives_dict = {}
+		true_positives_dict[ ks[0] ] = 0.0
+		true_positives_dict[ ks[1] ] = 0.0
+
+		total_deps =  0
+		for idd , dep in zip(ids , dependencies):
+			#print( type( dep ))
+
+			total_deps += len( ast.literal_eval( dep )  )
+
+		print("caballo mistico")
+		print( total_deps )
 		for idd , dep  in zip(ids , dependencies )  :
 			#if l % 500 == 0 :
 
@@ -438,23 +445,32 @@ class DataManager():
 			l = l + 1
 
 			corrects_by_k = []
+
+			avg_true_positives = 0.0
+			
+
 			for k  in ks :
 
-				issues = self.find_by_id( idd  , k = k  )
+				issues = self.find_by_id( idd  , k = k  , k2 = 20 )
 
 				corrects = 0
 				correct_issues = []
 				for i in issues: 
 
-					if i in dep:
-						corrects = corrects + 1
-						correct_issues.append( i )
+					#print( type(i) )
+					id_issue = i["toid"]
 
-				d = 0 
-				if len( dep) == 0 :
-					d = 1 
-				true_positives_rate = corrects/float( len( dep  )  + d )
-				
+					#print( type( dep )  )
+					if id_issue in dep:
+						corrects = corrects + 1
+						correct_issues.append( i["toid"] )
+
+				d = 0
+				#print( len(dep) )
+				#print( corrects )
+				#true_positives_rate = corrects/float( len( dep  )  + d )
+				true_positives_dict[ k ] += corrects  
+
 				#print(" True positives rate: " ,  true_positives_rate )
 				#print( "False positives rate:" , 1 - true_positives_rate )
 				#print( "Samples:" , len(issues))
@@ -469,12 +485,19 @@ class DataManager():
 
 		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
 
-		df_final.to_csv("./results_test_k5_k20_with_lgb_duplicates.csv")
+		df_final.to_csv("./results_test_k100_k1000_with_lgb_complete.csv")
 
 		k5_found = 0
 		k20_found = 0
-		k100_found = 0 
-		k200_found = 0 
+
+		for k in ks: 
+			print( total_deps )
+			print( true_positives_dict[k] )
+			arr =  (true_positives_dict[k]/total_deps)*100
+
+			print("Average true positives rate for {} candidates: {} ".format( k , arr)  )
+
+		"""
 		total = 0
 		for i , j , k     in zip(df_final["k100"].values , df_final["k1000"] , df_final["dependencies"]  ):
 			k5_found += len(i )
@@ -489,6 +512,8 @@ class DataManager():
 		print( "K 1000 accuracy: {}".format( k20_found/float( total) )  )
 		#print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
 		#print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
+		""" 
+
 
 #####################
 #### DEPRECATED #####
