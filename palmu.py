@@ -163,11 +163,9 @@ if __name__ == '__main__':
 
 	#prepare_data.onstart()
 
-	files = []
-	files = os.listdir( "./data" )
-	files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
-	print("Processing Json Files")
-	print( files_json )
+	
+	print("Palmu main")
+	#print( files_json )
 
-	app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
+	#app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
 	#app.before_first_request( prepare_data.oad_projects()  )

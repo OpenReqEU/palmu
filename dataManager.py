@@ -50,11 +50,24 @@ class DataManager():
 		#self.mallikas_url = "https://api.openreq.eu/mallikas"
 
 		#self.post_to_milla( code ="ok" )
-		print("NICe")
-		self.load_projects2()
+		#print("NICe")
+		self.delete_files()
+		self.load_projects2( refresh = True )
 		#self.process_files()
 		#self.test_accuracy()
 		return None
+
+	def delete_files(self):
+
+		if os.path.exists( self.hdf_path  ):
+			if self.hdf5_file is not None:
+				self.hdf5_file.close()
+			os.remove( self.hdf_path )
+		if os.path.exists( self.mappings_path ):
+			os.remove( self.mappings_path )
+		if os.path.exists( self.featurizer_path):
+			os.remove( self.featurizer_path )
+
 
 	def post_to_milla( self , code = "ok" ):
 
@@ -68,9 +81,9 @@ class DataManager():
 
 		return  [ "QTWB"]  #projects[:1]
 
-	def load_projects2(self ):
+	def load_projects2(self , refresh = False ):
 
-		self.process_files( refresh = False )
+		self.process_files( refresh = refresh )
 		self.loadHDF5()
 		self.indexSize = 0 
 		self.buildIndex()
@@ -250,11 +263,8 @@ class DataManager():
 		# List existing files on data folder , 
 
 		if refresh:
-			print( "REFRESHING DATA ")
-			if os.path.exists( self.hdf_path ):
-				if self.hdf5_file is not None:
-					self.hdf5_file.close()
-				os.remove( self.hdf_path )
+			# 
+			self.delete_files()
 
 		if os.path.isfile( self.hdf_path ):
 
@@ -286,13 +296,13 @@ class DataManager():
 			a = tables.Atom.from_dtype( np.dtype('<f8'), dflt=0.0 )
 			shape = ( 0 ,100 )
 			earray = hdf5_embedd_file.create_earray(hdf5_embedd_file.root,'data', a ,shape,"Embeddings")
-			print("*"*3)
-			print( earray.nrows )
-			print( earray.rowsize)
-			print( earray.atom )
+			#print("*"*3)
+			#print( earray.nrows )
+			#print( earray.rowsize)
+			#print( earray.atom )
 			for emb in embs:
-				print("adasdasda")
-				print( emb.shape )
+				#print("adasdasda")
+				#print( emb.shape )
 				emb = emb.reshape( (1 , -1) )
 				earray.append( emb )
 
@@ -436,8 +446,6 @@ class DataManager():
 
 			total_deps += len( ast.literal_eval( dep )  )
 
-		print("caballo mistico")
-		print( total_deps )
 		for idd , dep  in zip(ids , dependencies )  :
 			#if l % 500 == 0 :
 

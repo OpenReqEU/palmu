@@ -13,10 +13,11 @@ if __name__ == '__main__':
 	files = []
 	files = os.listdir( "./data" )
 	files_json = [ jsons_path+"/"+f for f in files if ".json" in f ]
+	#files_json.append("./data/nohay.no")
 	print("Processing Json Files")
-	print( files_json )
-
-	app.run(host='0.0.0.0' , extra_files = files_json , debug=True )
+	print( files_json )	
+	
+	app.run(host='0.0.0.0', port=9210 , extra_files = files_json , debug=True )
 
 
 
