@@ -43,7 +43,7 @@ class GBMModel( ):
 		# data is an array -> [   word_emb_issue , word_emb_candidate_ ]
 		# return the index of the highest ranked scores 
 
-		print( data.shape )
+		#print( data.shape )
 		
 
 
@@ -62,7 +62,7 @@ class GBMModel( ):
 		#iiix = np.arange( len( y_preds ))
 
 		#return iiix , y_preds[iiix ] 
-		#y_preds  = self.logistic.predict_proba( y_preds.reshape(  (-1 , 1 ))  )[: , 1 ]
+		y_preds  = self.logistic.predict_proba( y_preds.reshape(  (-1 , 1 ))  )[: , 1 ]
 		#clf.predict_proba( calibration_data)[:,1]
 		indexs = y_preds.argsort()[-20:][::-1]
 		#indexs =   np.where( y_preds == 1.0 )[0]   #y_preds.argsort()[-k:][::-1]
@@ -70,7 +70,7 @@ class GBMModel( ):
 		#print( len( indexs ) )
 		#indexs =   y_preds.argsort()[-20:][::-1]
 		#print( "valids:" , indexs )
-		print("maxxxx" ,  y_preds[ indexs ].max( ))
+		#print("maxxxx" ,  y_preds[ indexs ].max( ))
 		return indexs  , y_preds[ indexs ]
 
 

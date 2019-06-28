@@ -6,9 +6,21 @@ from palmu import app
 
 # Import CherryPy
 import cherrypy
-
+import os 
 if __name__ == '__main__':
 
+	jsons_path = "./data"
+	files = []
+	files = os.listdir( "./data" )
+	files_json = [ jsons_path+"/"+f for f in files if ".json" in f ]
+	print("Processing Json Files")
+	print( files_json )
+
+	app.run(host='0.0.0.0' , extra_files = files_json , debug=True )
+
+
+
+	"""
     # Mount the application
     cherrypy.tree.graft(app, "/")
 
@@ -36,3 +48,4 @@ if __name__ == '__main__':
 
     cherrypy.engine.start()
     cherrypy.engine.block()
+	"""

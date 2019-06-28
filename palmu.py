@@ -147,8 +147,6 @@ def post_project():
 
     path = os.path.join('./data/', filename)
 
-    print(path)
-
     with open(path, 'w') as json_file:
         json.dump(data, json_file)
         json_file.close()
@@ -157,25 +155,19 @@ def post_project():
     #dm.process_files( path , refresh = True )
     #return "ok"
     data= { "status" : "ok"}
-    print("FILE WRITTEN")
-    #dm.process_files( refresh = True)
-    # run the async celery task 
-    process_json_files.delay()
-    #print( result.wait() ) 
-    #print("Ejecutadoooooo ")
     return jsonify( data )
 
-@app.route("/load", methods=['POST'])
-def load():
-	print("Cosas chidas")
-	dm.loadHDF5()
-	dm.buildIndex()
-	return jsonify( {"status":"ok"})
 #app.before_first_request( prepare_data.onstart() )
 
 if __name__ == '__main__':
 
 	#prepare_data.onstart()
 
-	app.run(host='0.0.0.0')
+	files = []
+	files = os.listdir( "./data" )
+	files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+	print("Processing Json Files")
+	print( files_json )
+
+	app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
 	#app.before_first_request( prepare_data.oad_projects()  )
