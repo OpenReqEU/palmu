@@ -20,6 +20,9 @@ from celery.signals import after_task_publish,task_success,task_prerun,task_post
 from dataManager import DataManager
 
 local_host = "127.0.0.1"
+
+
+
 def make_celery( app ):
 	celery = Celery(
 		app.import_name , 
