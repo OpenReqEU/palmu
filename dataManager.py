@@ -11,33 +11,17 @@ import faiss
 import featurizer , fastTextUtils , gbmModel 
 import ast
 
-"""
-[
-  {
-    "created_at": 0,
-    "dependency_score": 0,
-    "dependency_type": "CONTRIBUTES",
-    "description": [
-      "string"
-    ],
-    "fromid": "string",
-    "id": "string",
-    "status": "PROPOSED",
-    "toid": "string"
-  }
-"""
 
 class DataManager():
 
 
 	def __init__(self , jsons_path = "./data" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" ):
 
-		# create model. 
-
-		# load fast text model
+		# This is the main class of the palmu module. It holds the necesary methods to build the models, make the queries and so on
 		self.model_fasttext = fastTextUtils.FastTextUtils( model_fasttext )
 		self.emb_dim = self.model_fasttext.dim
-		# load GBM models
+		# load GBM models, this will be used for prediction of probabibilities later on, the code assumes the existence of pretrained
+		# models existing in the lgb_path folder, the pretrained models must contain in their name, the word pass name parameter
 		self.model_lgbm = gbmModel.GBMModel( path = lgb_path , name = lgb_name )
 		# creating auxiliar paths 
 		self.jsons_path = jsons_path
@@ -45,14 +29,8 @@ class DataManager():
 		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
-		#self.milla_url = "http://0.0.0.0:9203" #/otherDetectionService"
-		#self.palmu_url = "http://0.0.0.0:9210" # /postProjec"
-		#self.mallikas_url = "https://api.openreq.eu/mallikas"
 
-		#self.post_to_milla( code ="ok" )
-		#print("NICe")
-		self.delete_files()
-		self.load_projects2( refresh = True )
+		self.load_projects2( refresh = False )
 		#self.process_files()
 		#self.test_accuracy()
 		return None
@@ -68,19 +46,6 @@ class DataManager():
 		if os.path.exists( self.featurizer_path):
 			os.remove( self.featurizer_path )
 
-
-	def post_to_milla( self , code = "ok" ):
-
-		params = { "status":  code  }
-		r = requests.post( url = self.milla_url + "/palmuInterface" , data = params    )
-
-		return r 
-
-
-	def get_projects(self ):
-
-		return  [ "QTWB"]  #projects[:1]
-
 	def load_projects2(self , refresh = False ):
 
 		self.process_files( refresh = refresh )
@@ -89,38 +54,6 @@ class DataManager():
 		self.buildIndex()
 		self.indexSize = self.data.shape[0] - 1 
 
-	def load_projects( self ):
-		#self.load_from_milla( "QTWB" )
-		#return True 
-		# get project 
-		for project in self.get_projects():
-			print( "Loading project: {}".format( project ) )
-
-			self.load_from_milla( project )
-
-		self.process_files( refresh = True )
-
-		print( "index building")
-
-		self.indexSize = 0 
-		self.buildIndex()
-		self.indexSize = self.data.shape[0] - 1 
-
-		print (" index adsasd")
-	def load_from_milla( self , projectId   ):
-		# url : url to palmu 
-		# projectId 
-		#headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0'} 
-		params = { "projectId":  projectId , "url" : self.palmu_url + "/postProject" }
-		#headers = {'content-type': 'application/json' }
-		print("requeeeest")
-		print( params )
-		r = requests.post( url = self.milla_url + "/otherDetectionService" , data = params    )
-		print( r.json() )
-		
-		# milla will send the data to the given url 
-		
-		return True 
 	def buildIndex( self ):
 		#builds the search index 
 
@@ -262,9 +195,9 @@ class DataManager():
 		# this function saves on disk the mappings in between the vector embeddings and the 
 		# List existing files on data folder , 
 
-		if refresh:
+		#if refresh:
 			# 
-			self.delete_files()
+		#	self.delete_files()
 
 		if os.path.isfile( self.hdf_path ):
 

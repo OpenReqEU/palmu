@@ -172,3 +172,10 @@ if __name__ == '__main__':
 
 	#app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
 	#app.before_first_request( prepare_data.oad_projects()  )
+
+
+"""
+CONTAINER_NAME="$JOB_BASE_NAME"
+sleep 10
+docker run --rm -d -p 9210:9210 --label "BUILD_NUMBER=$BUILD_NUMBER" --name "$CONTAINER_NAME" -i -t "$CONTAINER_NAME"
+"""
