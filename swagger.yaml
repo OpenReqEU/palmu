@@ -9,8 +9,8 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "petstore.swagger.io"
-basePath: "/v2"
+host: "api.openreq.eu"
+basePath: "/palmu"
 tags:
 - name: "Palmu"
   description: "Requirement detection"
