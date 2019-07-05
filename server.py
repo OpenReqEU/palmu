@@ -9,6 +9,7 @@ import cherrypy
 import os 
 if __name__ == '__main__':
 
+	os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 	jsons_path = "./data"
 	files = []
 	files = os.listdir( "./data" )
@@ -17,5 +18,5 @@ if __name__ == '__main__':
 	print("Processing Json Files")
 	print( files_json )	
 	#files_json = []
-	app.run(host='0.0.0.0', port=9210 , extra_files = files_json , debug=False )
+	app.run(host='0.0.0.0', port=9210 , extra_files = files_json , debug=True )
 
