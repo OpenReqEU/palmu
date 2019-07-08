@@ -392,7 +392,7 @@ class DataManager():
 
 			for k  in ks :
 
-				issues = self.find_by_id( idd  , k = k  , k2 = 20 )
+				issues = self.find_by_id( idd  , k = k  , k2 = k )
 
 				corrects = 0
 				correct_issues = []
