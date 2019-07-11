@@ -29,10 +29,12 @@ class DataManager():
 		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
-
+		self.dependencies_dict_path = self.jsons_path + "/dependencies_dict.bin"
+		self.dependencies_dict = {}
 		self.load_projects2( refresh = False )
 		#self.process_files()
 		#self.test_accuracy()
+		self.test_update()
 		return None
 
 	def delete_files(self):
@@ -132,6 +134,15 @@ class DataManager():
 
 	def parse_issue( self , qtid , dup , score = ""  ):
 
+
+		if dup in self.dependencies_dict.keys():
+
+			score = score
+		else:
+			print( "ORPHAN FOUND" , dup )
+			score = score + 1 
+
+
 		results = {}
 		results["created_at"] = "0"
 		results["dependency_type"] = "SIMILAR"
@@ -145,6 +156,47 @@ class DataManager():
 
 		return results
 
+	def add_or_update_reqs(self , list_new_reqs ):
+
+		self.hdf5_file.close() # for safety 
+		self.hdf5_file = tables.open_file( self.hdf_path , mode = "r+") # re open
+
+		#data = self.hdf5_file.root.data[:]
+		i = 0 
+
+		for req in list_new_reqs:
+
+			idd = req["id"]
+			embedding = self.featurizer.featurize( req )
+			embedding = embedding.reshape( ( 1 , 100 ))
+			embedding = self.norm_vec( embedding )
+
+			if idd in self.mappings.keys():
+				# Idd already exists in dataset
+				print(idd , i  , " in index ")
+				indexId = self.mappings[idd]
+
+				# after we get the embedding
+				self.hdf5_file.root.data[ indexId , : ] = embedding
+
+			else:
+				print(idd , i , "not in index " )
+				self.hdf5_file.root.data.append( embedding )
+				newIndex = len( self.hdf5_file.root.data[:] ) - 1 
+				print( newIndex )
+				self.mappings[idd] = newIndex
+			i += 1  
+
+		# save the modified mappings 
+		pickle.dump( self.mappings ,   open( self.mappings_path, "wb" ) , protocol=2 )
+		print("updates")
+		print( "number of keys:" , len( self.mappings.keys() ))
+		print( "number of reqss:" , len( self.hdf5_file.root.data[:]))
+		self.hdf5_file.close()
+		self.loadHDF5()
+	
+
+		return True 	
 	def find_by_new( self , openreqJson , k = 1000 , k2 = 11  ):
 
 		# openredJson must be a valid openreqJson 
@@ -204,6 +256,8 @@ class DataManager():
 			self.mappings = pickle.load( open( self.mappings_path , "rb") )
 			self.inverse_mapping = {v: k for k, v in self.mappings.items()}
 			self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
+			self.dependencies_dict = pickle.load( open( self.dependencies_dict_path , "rb"))
+			#print( self.dependencies_dict )
 			self.loadHDF5()
 			print( "File already exists ! loaded ")
 
@@ -214,6 +268,7 @@ class DataManager():
 			files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
 			print("Processing Json Files")
 			embs , mapp = self.get_embeddings( files_json  )
+			self.dependencies_dict = self.get_dependencies_dict( files_json )
 			self.mappings = mapp
 			self.inverse_mapping = {v: k for k, v in self.mappings.items() }
 
@@ -221,14 +276,14 @@ class DataManager():
 
 			embs = np.array( embs )
 			# save mappings to disk 
-
 			pickle.dump( mapp ,   open( self.mappings_path, "wb" ) , protocol=2 )
+			pickle.dump( self.dependencies_dict , open( self.dependencies_dict_path ,"wb") , protocol = 2 )
 
 
 			hdf5_embedd_file = tables.open_file(  self.hdf_path , mode='w')
 			a = tables.Atom.from_dtype( np.dtype('<f8'), dflt=0.0 )
 			shape = ( 0 ,100 )
-			earray = hdf5_embedd_file.create_earray(hdf5_embedd_file.root,'data', a ,shape,"Embeddings")
+			earray = hdf5_embedd_file.create_earray( hdf5_embedd_file.root ,'data', a ,shape,"Embeddings")
 			#print("*"*3)
 			#print( earray.nrows )
 			#print( earray.rowsize)
@@ -244,6 +299,29 @@ class DataManager():
 			#self.loadHDF5()
 
 			print("HDF5 FILE CREATED AND LOADED")
+	def get_dependencies_dict( self , files_json  ):
+
+		total_deps = []
+
+		for file in files_json:
+
+			deps = self.get_deps( file )
+			total_deps = total_deps + deps 
+
+		deps_dict = {}
+		for d in total_deps:
+			fromid = d["fromid"]
+			deps_dict[fromid] = []
+
+
+		for d in total_deps:
+			fromid = d["fromid"]
+			toid = d["toid"]
+			deps_dict[fromid].append( toid )
+
+
+		return deps_dict 
+
 
 	def loadHDF5( self ):
 
@@ -305,10 +383,6 @@ class DataManager():
 
 		return all_embeddings , mapping 
 
-	def add_new_project_from_file( self , filename):
-
-
-		return True
 
 	def get_reqs( self , file ):
 	    
@@ -319,38 +393,34 @@ class DataManager():
 			data = json.loads( data )
 			#print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
 		return data["requirements"]
+
+	def get_deps( self , file ):
+
+		data = ""
+		with open( file , "r" , encoding = "utf-8") as f:
+			data = f.read()
+
+			data = json.loads( data )
+			#print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
+		return data["dependencies"]
 	        
-	def test( self ) :
+	def test_update( self ): 
 
-		# create some test 
+		#
+		reqs = self.get_reqs( "./data/QTWB.json") 
+		
+		self.add_or_update_reqs( reqs )
+		for req in reqs:
+			req["text"] = req["text"] + " modified dfdsfsdfsfs"
 
-		f = open( "./test_large.txt" , "r") 
+		# test modify content same req 
+		self.add_or_update_reqs( reqs )
 
+		for  i , req in enumerate( reqs ) :
+			req["id"]  = req["id"] + "___{}".format( i*121 )
 
-		reqs = []
-		dupls = []
-		print("<sdasdasdadsassssssssssssssssssssss")
-		for line in f:
-
-			# each line is a req 
-			print(line)
-			req = json.loads( line )
-
-			issues = self.find_by_new( req )
-
-			reqs.append( req["id"] )
-			dupls.append( issues )
-
-		f.close()
-		d = {
-
-			"Ids" : reqs , 
-			"Similar issues" : dupls   
-		} 
-
-
-		df = pd.DataFrame( d ) 
-		df.to_csv("./results_test.csv")
+		#print( reqs[0]["id"])
+		self.add_or_update_reqs(reqs )
 
 
 	def test_accuracy( self ):
@@ -438,39 +508,7 @@ class DataManager():
 
 			print("Average true positives rate for {} candidates: {} ".format( k , arr)  )
 
-		"""
-		total = 0
-		for i , j , k     in zip(df_final["k100"].values , df_final["k1000"] , df_final["dependencies"]  ):
-			k5_found += len(i )
-			k20_found += len( j )
-			total += len( k )
-			#k100_found += len(m) 
-			#k200_found += len(l )
 
-		total = df_final.shape[0]
-		print("OVERAll accuracy")
-		print( "K 100 accuracy: {}".format( k5_found/float( total) )  )
-		print( "K 1000 accuracy: {}".format( k20_found/float( total) )  )
-		#print( "K 100 accuracy: {}".format( k100_found/float( total) )  )
-		#print( "K 1000 accuracy: {}".format( k200_found/float( total) )  )
-		""" 
-
-
-#####################
-#### DEPRECATED #####
-#####################
-	def loadGloveModel( self , gloveFile):
-
-		print("Loading Glove Model")
-		f = open(gloveFile,'r')
-		model = {}
-		for line in f:
-			splitLine = line.split()
-			word = splitLine[0]
-			embedding = np.array([float(val) for val in splitLine[1:]])
-			model[word] = embedding
-		print("Done.",len(model)," words loaded!")
-		return model
 
 
 
