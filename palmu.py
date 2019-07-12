@@ -19,16 +19,14 @@ from celery.signals import after_task_publish,task_success,task_prerun,task_post
 
 from dataManager import DataManager
 
-local_host = "127.0.0.1"
-
 app = Flask(__name__)
 #celery.control.purge()
 
 
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
-
-dm = DataManager( jsons_path = "./data" , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
+JSONS_PATH = "./data"
+dm = DataManager( jsons_path = JSONS_PATH , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
 
 #### END POINTS AND CELERY TASKS 
 
@@ -37,7 +35,11 @@ def main():
 
 	idd = request.args.get('id')
 	k = request.args.get("k")
-
+	multiplier = 1
+	try:
+		multiplier = request.args.get("m")
+	except:
+		multiplier = 1 
 	if k == None:
 		k = 5
 	else:
@@ -46,7 +48,7 @@ def main():
 		return {}
 
     #print( "Query issue: " , idd )
-	similar_issues = dm.find_by_id( idd , k = k )
+	similar_issues = dm.find_by_id( idd , k = k , multiplier = multiplier  )
 	results = dict()
 	results["dependencies"] = similar_issues
 	return json.dumps( results )
@@ -85,11 +87,8 @@ def post_project():
         return jsonify( {"status" :  "ok"} )
 
     project_name = data["projects"][0]["id"]
-
-    print("New project: ", project_name)
-
+    #print("New project: ", project_name)
     filename = project_name + '.json'
-
     dm.delete_files()
     path = os.path.join('./data/', filename)
 
@@ -97,6 +96,7 @@ def post_project():
         json.dump(data, json_file)
         json_file.close()
 
+    # This will re launch the server and reload all available projects
     data = { "status" : "ok"}
 
     return jsonify( data )
@@ -106,6 +106,8 @@ def update_reqs():
 
 	data = request.get_json()
 	reqs = data["requirements"]
+	# Requirements will be added, updated as needed but one important thing is that it will not return 
+	# any response until the whole thing is done. so it will only make sense if the number of requeriments to be updated is small
 	dm.add_or_update_reqs( reqs )
 	resp = { "status" : "ok" }
 	return jsonify( resp )
@@ -117,10 +119,3 @@ if __name__ == '__main__':
 
 	#app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
 	#app.before_first_request( prepare_data.oad_projects()  )
-
-
-"""
-CONTAINER_NAME="$JOB_BASE_NAME"
-sleep 10
-docker run --rm -d -p 9210:9210 --label "BUILD_NUMBER=$BUILD_NUMBER" --name "$CONTAINER_NAME" -i -t "$CONTAINER_NAME"
-"""

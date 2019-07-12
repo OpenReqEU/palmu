@@ -53,10 +53,10 @@ class DataManager():
 		self.process_files( refresh = refresh )
 		self.loadHDF5()
 		self.indexSize = 0 
-		self.buildIndex()
+		self.build_index()
 		self.indexSize = self.data.shape[0] - 1 
 
-	def buildIndex( self ):
+	def build_index( self ):
 		#builds the search index 
 
 		# Dimenstion of the vectors
@@ -121,18 +121,9 @@ class DataManager():
 				found_issues.append( json_obj  )
 
 		# return the list of found ids 
-		return found_issues
+		return found_issues	
 
-	def old_implementation( self  , indxs , distances , qtid   ):
-
-
-		for  i , issue in  enumerate( indxs[0][:1] ):
-			json_obj = self.parse_issue( qtid , self.inverse_mapping )
-
-			
-
-
-	def parse_issue( self , qtid , dup , score = ""  ):
+	def parse_issue( self , qtid , dup , score = "" , multiplier = 1  ):
 
 
 		if dup in self.dependencies_dict.keys():
@@ -140,7 +131,7 @@ class DataManager():
 			score = score
 		else:
 			print( "ORPHAN FOUND" , dup )
-			score = score + 1 
+			score = score*multiplier
 
 
 		results = {}
