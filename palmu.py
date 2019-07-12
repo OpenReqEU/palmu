@@ -37,7 +37,7 @@ def main():
 	k = request.args.get("k")
 	multiplier = 1
 	try:
-		multiplier = request.args.get("m")
+		multiplier = float( request.args.get("m") ) 
 	except:
 		multiplier = 1 
 	if k == None:

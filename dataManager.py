@@ -10,7 +10,7 @@ import tables
 import faiss 
 import featurizer , fastTextUtils , gbmModel 
 import ast
-
+import time 
 
 class DataManager():
 
@@ -31,10 +31,14 @@ class DataManager():
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
 		self.dependencies_dict_path = self.jsons_path + "/dependencies_dict.bin"
 		self.dependencies_dict = {}
+		start = time.time()
 		self.load_projects2( refresh = False )
+		end = time.time()
+		time_difference = end - start
+		print("Time used loading projects:" , time_difference )
 		#self.process_files()
 		#self.test_accuracy()
-		self.test_update()
+		#self.test_update()
 		return None
 
 	def delete_files(self):
@@ -77,7 +81,7 @@ class DataManager():
 
 		return  np.nan_to_num( a )  
 
-	def find_by_id( self , qtid  , k = 5 , k2 = 20  ):
+	def find_by_id( self , qtid  , k = 5 , k2 = 20 , multiplier = 1   ):
 		# return list of know issues 
 
 		# if the id is not in the index, return an empty list 
@@ -116,7 +120,7 @@ class DataManager():
 		for index , score  in zip( top_indexs , scores ) :
 			issue = partial_map[index]
 			if issue in self.inverse_mapping:
-				json_obj = self.parse_issue( qtid , self.inverse_mapping[issue] , score   )
+				json_obj = self.parse_issue( qtid , self.inverse_mapping[issue] , score , multiplier    )
 
 				found_issues.append( json_obj  )
 
