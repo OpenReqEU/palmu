@@ -37,7 +37,7 @@ def main():
 	k = request.args.get("k")
 	multiplier = 1
 	try:
-		multiplier = float( request.args.get("m") ) 
+		multiplier = int( request.args.get("m") ) 
 	except:
 		multiplier = 1 
 	if k == None:
@@ -60,7 +60,7 @@ def new_issue():
 	req = request.get_json()
 	k = None 
 	try:
-		k = req["k"]
+		k = int( req["k"] ) 
 	except:
 		k = 5
 
@@ -85,6 +85,7 @@ def post_project():
 
     if data is None:
         return jsonify( {"status" :  "ok"} )
+
 
     project_name = data["projects"][0]["id"]
     #print("New project: ", project_name)
