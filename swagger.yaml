@@ -25,7 +25,7 @@ paths:
     get:
       tags:
       - "Palmu"
-      summary: "Get related issues for a given query"
+      summary: "Get related issues for a given query."
       description: ""
       operationId: "getRelated"
       consumes:
@@ -35,11 +35,13 @@ paths:
       parameters:
       - in: "body"
         name: "body"
-        description: "The body contains an id (string) and k ( integer) number of issues to retrieve"
+        description: "The body contains an id (string) , k ( integer) number of issues to retrieve and a factor m that whill enhace the score for orphan requirements"
         required: true
         schema:
           $ref: "#/definitions/queryIssueObject"
       responses:
+        200:
+          description: "OpenReq dependencies object"
         405:
           description: "Invalid input"
       security:
@@ -72,11 +74,39 @@ paths:
       tags:
       - "Palmu"
       summary: "Post new projects to the Palmu database"
-      description: "This endpoint recieves as a parameter a valid OpenReq Json with new requeriments to be added to the database"
+      description: "This endpoint recieves as a parameter a valid OpenReq Json with new requeriments to be added to the database. Must be used with care since it will update the entire database of word embeddings and as a result the service will be restarted, and will take around 40 minutes to be available again."
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "The request must contain a valid list of OpenReqJson projects. Only one project is  per call"
+        schema:
+          $ref: "#/definitions/openReqJson"
       responses:
         200:
-          description: "successfull operation"
-
+          description: "successfull operation. Restating server"
+  /updateRequirements:
+    post:
+      tags:
+      - "Palmu"
+      summary: "Update or add new requirements to the service"
+      description: "This endpoint can be used to add new or modify requirements ( and their word embeddings) in the service. This endpoint doesn't work in an asynchronus fashion and it may keep other services hanging while it finishes the updates."
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "The request must contain a valid list of OpenReqJson projects. Only one project is  per call"
+        schema:
+          $ref: "#/definitions/openReqJson"
+      responses:
+        200:
+          description: "successfull operation, requirements updated" 
 securityDefinitions:
   petstore_auth:
     type: "oauth2"
@@ -98,6 +128,11 @@ definitions:
       k:
         type: "integer"
         format: "int64"
+        default: 10
+      m:
+        type: "integer"
+        format: "int64"
+        default: 1
   newIssueObject:
     type: "object"
     properties:
@@ -106,10 +141,10 @@ definitions:
       k: 
         type: "integer"
         format: "int64"
-  listIssues:
-    type: "object"
+  openReqJson:
+    type: object
     properties:
-      similar:
+      projects: 
         type: "object"
       
 externalDocs:
