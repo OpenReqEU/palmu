@@ -55,7 +55,7 @@ class DataManager():
 	def load_projects2(self , refresh = False ):
 
 		self.process_files( refresh = refresh )
-		self.loadHDF5()
+		self.load_HDF5()
 		self.indexSize = 0 
 		self.build_index()
 		self.indexSize = self.data.shape[0] - 1 
@@ -188,7 +188,7 @@ class DataManager():
 		print( "number of keys:" , len( self.mappings.keys() ))
 		print( "number of reqss:" , len( self.hdf5_file.root.data[:]))
 		self.hdf5_file.close()
-		self.loadHDF5()
+		self.load_HDF5()
 	
 
 		return True
@@ -254,7 +254,7 @@ class DataManager():
 			self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
 			self.dependencies_dict = pickle.load( open( self.dependencies_dict_path , "rb"))
 			#print( self.dependencies_dict )
-			self.loadHDF5()
+			self.load_HDF5()
 			print( "File already exists ! loaded ")
 
 		else:
@@ -292,7 +292,7 @@ class DataManager():
 
 
 			hdf5_embedd_file.close()
-			#self.loadHDF5()
+			
 
 			print("HDF5 FILE CREATED AND LOADED")
 	def get_dependencies_dict( self , files_json  ):
@@ -319,7 +319,7 @@ class DataManager():
 		return deps_dict 
 
 
-	def loadHDF5( self ):
+	def load_HDF5( self ):
 
 		self.mappings = pickle.load( open( self.mappings_path , "rb") )
 		self.inverse_mapping = {v: k for k, v in self.mappings.items()}
