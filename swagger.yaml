@@ -33,12 +33,20 @@ paths:
       produces:
       - "application/json"
       parameters:
-      - in: "body"
-        name: "body"
-        description: "The body contains an id (string) , k ( integer) number of issues to retrieve and a factor m that whill enhace the score for orphan requirements"
-        required: true
-        schema:
-          $ref: "#/definitions/queryIssueObject"
+      - in: "query"
+        name: "id"
+        type: "string"
+        description: "The id of the requirement to be queried"
+      - in : "query"  
+        name: "k"
+        type: "integer"
+        description: "Number of similar requirements to be retrieved"
+        default: 10
+      - in: "query"
+        name: "m"
+        type: "integer"
+        description: "A multiplier used to enhance the importance of orphan requirements over other. Is 1 by default"
+        default: 1
       responses:
         200:
           description: "OpenReq dependencies object"
