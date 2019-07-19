@@ -93,7 +93,7 @@ def post_project():
     dm.delete_files()
     path = os.path.join('./data/', filename)
 
-    with open(path, 'w') as json_file:
+    with open(path, 'w' , encoding = "utf-8") as json_file:
         json.dump(data, json_file)
         json_file.close()
 

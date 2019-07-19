@@ -6,4 +6,4 @@ flask
 cherrypy
 tables
 lightgbm
-redis
+tqdm

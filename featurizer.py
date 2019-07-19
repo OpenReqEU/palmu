@@ -6,7 +6,7 @@ import pickle
 import tables
 import faiss 
 import string
-
+from tqdm import tqdm 
 
 class Featurizer( ):
 
@@ -34,13 +34,15 @@ class Featurizer( ):
 		mapp = {}
 		output = []
 		i = 0 
-		for req in reqs:
+		for req in tqdm( reqs ):
 
 			if "text" in req:
 				emb = self.featurize( req )
 				output.append( emb )
 				mapp[req["id"]] = i
-				i = i + 1 
+				i = i + 1
+			else: 
+				emb = np.zeros( self.dim )
 
 		output = np.array( output ) 
 		print( "Shape embeddings" ,  output.shape )
@@ -49,36 +51,19 @@ class Featurizer( ):
 	def featurize( self , req ):
 		# build the features for a single request 
 		#print( req["text"])
-		emb_text = self.get_average_embedding( req["text"]  ) 
-		emb_name = self.get_average_embedding(  req["name"]  )  
+		final_embedding = np.zeros( (self.dim) )
+		emb_text = np.zeros( ( self.dim ))
+		emb_text =np.zeros( (self.dim ))
+		emb_comment = np.zeros( (self.dim) )
+		if "text" in req:
+			emb_text = self.get_average_embedding( req["text"]  ) 
+		if "name" in req:
+			emb_name = self.get_average_embedding(  req["name"]  ) 
+  
 		emb_comment = self.get_comments_embeddings( req )
 		emb_components = self.get_components_embeddings( req )
+		final_embedding = ( 0.4*emb_name + 0.4*emb_text   + 0.2*emb_comment)
 
-		#emb_mix = (emb_text + emb_name +emb_comment)/3.0
-
-		# those arent word embedding but one-hot encoded vectors
-		"""
-		if "status" in req:
-			emb = self.encoder_status.transform(   [req["status"]]   )
-			#print(emb)
-			emb_status = np.zeros( len(self.encoder_status.classes_)  )
-			emb_status[ emb[0] ] = 1.0 
-
-		else:
-			emb_status = np.zeros( len(self.encoder_status.classes_)  )
-
-		if "requirement_type" in req:
-			emb = self.encoder_type.transform( [req["requirement_type"]]  ) 
-			emb_type = np.zeros( len(self.encoder_type.classes_)  )
-			emb_type[ emb[0] ] = 1.0 
-		else:
-			emb_type = np.zeros( len(self.encoder_type.classes_)  )
-
-		""" 
-		#final_embedding = np.hstack( [ emb_text , emb_name , emb_comment  ]  )
-		final_embedding = ( 0.4*emb_name + 0.4*emb_text   + 0.2*emb_comment) #+ 0.1*emb_components
-		#final_embedding = em_
-		#print( emb_name )
 
 		return final_embedding
 

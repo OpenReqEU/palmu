@@ -33,36 +33,10 @@ WORKDIR /data
 COPY . /app
 WORKDIR /app
 
-#ENV VIRTUAL_ENV=/opt/venv
-#CMD pip install --upgrade pip
-#CMD pip3 install virtualenv
-#RUN python3 -m venv $VIRTUAL_ENV
-#ENV PATH="$VIRTUAL_ENV/bin:$PATH" 
-
-
-#CMD mkdir virtual-env && cd virtual-env
-#CMD python3 -m venv env 
-#CMD source env/bin/activate
-
 RUN pip3 install -r requirements.txt
 
 
-
-#CMD ["redis-server", "/etc/redis/redis.conf"]
-#CMD  python3 server.py && redis-server && redis-cli ping
-
-#CMD ./start.sh 
-#CMD redis-cli ping 
-#CMD ["redis-server", "./redis.conf"]
-#CMD redis-server ./redis.conf && python3 server.py 
-#CMD ["./start.sh"]
-
+EXPOSE 9210
 CMD ["python3" , "server.py" ]
 
-EXPOSE 9210
-EXPOSE 6379
 
-
-#CMD redis-cli ping
-#CMD ["./start.sh"]
-#CMD ["redis-cli" , "ping"]

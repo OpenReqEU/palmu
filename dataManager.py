@@ -12,6 +12,7 @@ import featurizer , fastTextUtils , gbmModel
 import ast
 import time 
 
+from tqdm import tqdm 
 class DataManager():
 
 
@@ -159,7 +160,7 @@ class DataManager():
 		#data = self.hdf5_file.root.data[:]
 		i = 0 
 
-		for req in list_new_reqs:
+		for req in tqdm( list_new_reqs ):
 
 			idd = req["id"]
 			embedding = self.featurizer.featurize( req )
@@ -168,17 +169,17 @@ class DataManager():
 
 			if idd in self.mappings.keys():
 				# Idd already exists in dataset
-				print(idd , i  , " in index ")
+				#print(idd , i  , " in index ")
 				indexId = self.mappings[idd]
 
 				# after we get the embedding
 				self.hdf5_file.root.data[ indexId , : ] = embedding
 
 			else:
-				print(idd , i , "not in index " )
+				#print(idd , i , "not in index " )
 				self.hdf5_file.root.data.append( embedding )
 				newIndex = len( self.hdf5_file.root.data[:] ) - 1 
-				print( newIndex )
+				#print( newIndex )
 				self.mappings[idd] = newIndex
 			i += 1  
 
