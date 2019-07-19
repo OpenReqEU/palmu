@@ -159,7 +159,7 @@ class DataManager():
 
 		#data = self.hdf5_file.root.data[:]
 		i = 0 
-
+		print("updating requirements:")
 		for req in tqdm( list_new_reqs ):
 
 			idd = req["id"]
@@ -263,7 +263,7 @@ class DataManager():
 
 			files = os.listdir( self.jsons_path )
 			files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
-			print("Processing Json Files")
+			#print("Processing Json Files")
 			embs , mapp = self.get_embeddings( files_json  )
 			self.dependencies_dict = self.get_dependencies_dict( files_json )
 			self.mappings = mapp
@@ -337,7 +337,7 @@ class DataManager():
 		self.data = np.array( self.data ).astype( np.float32 )
 		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
 
-		print("loadddeddd stufff")
+		
 
 	def get_embeddings( self ,  files_json  ):
 		# return the 
@@ -346,7 +346,7 @@ class DataManager():
 		all_embeddings = []
 		index = 0
 		mapping = {}
-		print( files_json )
+		#print( files_json )
 
 		all_reqs = []
 		for file in files_json:
