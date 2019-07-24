@@ -56,27 +56,6 @@ paths:
       - petstore_auth:
         - "write:pets"
         - "read:pets"
-  /newIssues:
-    post:
-      tags:
-      - "Palmu"
-      summary: "Query and add a new issue to the data"
-      description: "Query a new issue and add the corresponding embedding to the data base for future queries"
-      produces:
-      - "application/json"
-      parameters:
-      - in: "body"
-        name: "body"
-        description: "the issue parameter contains a valid OpenReqJson and k is an integer for the number of similar issues to retrieve."
-        required: true
-        schema:
-          $ref: "#/definitions/newIssueObject"
-
-      responses:
-        200:
-          description: "successful operation"
-        400:
-          description: "Invalid status value"
   /postProject:
     post:
       tags:
