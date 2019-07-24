@@ -36,7 +36,7 @@ class DataManager():
 		self.load_projects2( refresh = False )
 		end = time.time()
 		time_difference = end - start
-		print("Time used loading projects:" , time_difference )
+		print("Time diff:" , time_difference )
 		#self.process_files()
 		#self.test_accuracy()
 		#self.test_update()
@@ -128,14 +128,14 @@ class DataManager():
 		# return the list of found ids 
 		return found_issues	
 
-	def parse_issue( self , qtid , dup , score = "" , multiplier = 1  ):
+	def parse_issue( self , qtid , dup , score = "" , multiplier = 1.0  ):
 
 
 		if dup in self.dependencies_dict.keys():
 
 			score = score
 		else:
-			print( "ORPHAN FOUND" , dup )
+			#print( "ORPHAN FOUND" , dup )
 			score = score*multiplier
 
 
@@ -162,21 +162,21 @@ class DataManager():
 		print("updating requirements:")
 		for req in tqdm( list_new_reqs ):
 
-			idd = req["id"]
+			query_id = req["id"]
 			embedding = self.featurizer.featurize( req )
 			embedding = embedding.reshape( ( 1 , 100 ))
 			embedding = self.norm_vec( embedding )
 
-			if idd in self.mappings.keys():
+			if query_id in self.mappings.keys():
 				# Idd already exists in dataset
 				#print(idd , i  , " in index ")
-				indexId = self.mappings[idd]
+				indexId = self.mappings[query_id]
 
 				# after we get the embedding
 				self.hdf5_file.root.data[ indexId , : ] = embedding
 
 			else:
-				#print(idd , i , "not in index " )
+				#
 				self.hdf5_file.root.data.append( embedding )
 				newIndex = len( self.hdf5_file.root.data[:] ) - 1 
 				#print( newIndex )

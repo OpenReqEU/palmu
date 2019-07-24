@@ -26,6 +26,7 @@ app = Flask(__name__)
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
 JSONS_PATH = "./data"
+
 dm = DataManager( jsons_path = JSONS_PATH , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
 
 #### END POINTS AND CELERY TASKS 
@@ -33,8 +34,9 @@ dm = DataManager( jsons_path = JSONS_PATH , model_fasttext = FAST_TEXT_MODEL  , 
 @app.route("/getRelated", methods=['GET'])
 def main():
 
-	idd = request.args.get('id')
+	query_id = request.args.get('id')
 	k = request.args.get("k")
+	# Multiplies used to enhance the orphan score
 	multiplier = 1
 	try:
 		multiplier = int( request.args.get("m") ) 
@@ -44,11 +46,12 @@ def main():
 		k = 5
 	else:
 		k = int( k )
-	if idd is None:
-		return {}
+	if query_id is None:
+		return json.dumps( { "dependencies" : [""] } ) 
 
-    #print( "Query issue: " , idd )
-	similar_issues = dm.find_by_id( idd , k = k , multiplier = multiplier  )
+    #Query issues from given id
+
+	similar_issues = dm.find_by_id( query_id , k = k , multiplier = multiplier  )
 	results = dict()
 	results["dependencies"] = similar_issues
 	return json.dumps( results )
@@ -56,7 +59,7 @@ def main():
 @app.route("/newIssue" , methods = ["POST"])
 def new_issue():
 
-	# read request 
+	# read request, the requirement
 	req = request.get_json()
 	k = None 
 	try:
@@ -72,7 +75,7 @@ def new_issue():
 
 	if similar_issues == []:
 
-		return {}
+		return json.dumps( { "dependencies" : [""]})
       
     
 	return json.dumps( similar_issues ) 
@@ -80,8 +83,8 @@ def new_issue():
 @app.route("/postProject", methods=['POST'])
 def post_project():
 
+	#get data from request
     data = request.get_json()
-    #print(data)
 
     if data is None:
         return jsonify( {"status" :  "ok"} )
@@ -91,7 +94,7 @@ def post_project():
     #print("New project: ", project_name)
     filename = project_name + '.json'
     dm.delete_files()
-    path = os.path.join('./data/', filename)
+    path = os.path.join( JSONS_PATH , filename)
 
     with open(path, 'w' , encoding = "utf-8") as json_file:
         json.dump(data, json_file)
