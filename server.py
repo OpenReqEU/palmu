@@ -8,7 +8,7 @@ from palmu import Palmu
 import os 
 if __name__ == '__main__':
 
-	p = Palmu( refresh = True )
+	p = Palmu( refresh = False )
 	app = p.create_app()
 	os.environ["HDF5_USE_FILE_LOCKING"] = "FALSE"
 	jsons_path = "./data"
