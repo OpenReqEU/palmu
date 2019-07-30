@@ -1,0 +1,6 @@
+[run]
+omit = coverage-reports/*, demos/*, tests/*, venv/*, *.csv , *.json , *.pyc
+[html]
+directory = coverage-reports/html
+[xml]
+output = coverage-reports/coverage.xml
