@@ -84,7 +84,7 @@ class Featurizer( ):
 		for w in words:
 			emb = None 
 			try: 
-				emb = self.words_model[w]
+				emb = self.words_model.wv[w]
 			except:
 				emb = np.zeros( (self.dim) )
 

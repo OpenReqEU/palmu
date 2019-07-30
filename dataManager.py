@@ -16,7 +16,7 @@ from tqdm import tqdm
 class DataManager():
 
 
-	def __init__(self , jsons_path = "./data" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" ):
+	def __init__(self , jsons_path = "./data" , emb_dim = 200 , model_fasttext = "" , lgb_path = "" , lgb_name = "Concat" , refresh = False ):
 
 		# This is the main class of the palmu module. It holds the necesary methods to build the models, make the queries and so on
 		self.model_fasttext = fastTextUtils.FastTextUtils( model_fasttext )
@@ -33,7 +33,7 @@ class DataManager():
 		self.dependencies_dict_path = self.jsons_path + "/dependencies_dict.bin"
 		self.dependencies_dict = {}
 		start = time.time()
-		self.load_projects2( refresh = False )
+		self.load_projects2( refresh = refresh )
 		end = time.time()
 		time_difference = end - start
 		print("Time diff:" , time_difference )
@@ -180,7 +180,7 @@ class DataManager():
 				self.hdf5_file.root.data.append( embedding )
 				newIndex = len( self.hdf5_file.root.data[:] ) - 1 
 				#print( newIndex )
-				self.mappings[idd] = newIndex
+				self.mappings[query_id] = newIndex
 			i += 1  
 
 		# save the modified mappings 
@@ -212,41 +212,21 @@ class DataManager():
 			return []
 		else:
 			
-			embedding = embedding.reshape( ( 1 , 100 ))
-			print( embedding.shape )
-			embedding = self.norm_vec( embedding )
-			self.add_new_embedding_index( embedding , newId  )
+			self.add_or_update_reqs( [ openreqJson] )
+			#embedding = embedding.reshape( ( 1 , 100 ))
+			#print( embedding.shape )
+			#embedding = self.norm_vec( embedding )
+			#self.add_new_embedding_index( embedding , newId  )
 			issues = self.find_by_id( newId  , k , k2 )
 
 			return issues
-
-	def add_new_embedding_index( self , embedding , newId ) :
-
-		#prit( self.data_elastic  )
-		self.data_elastic.append( embedding )
-		self.data = self.hdf5_file.root.data[:]
-		self.data = np.array( self.data ).astype( np.float32 )
-		self.data = self.data.reshape( ( -1 , self.featurizer.final_size ))
-
-		#rebuild index 
-		self.index = faiss.IndexFlatL2( self.featurizer.final_size  )
-		self.index.add( self.data )
-
-		self.indexSize = self.indexSize + 1 
-		self.mappings[ newId ] = self.indexSize 
-		self.inverse_mapping[ self.indexSize ] = newId 
-
-		# update mappings 
-		pickle.dump( self.mappings ,   open( self.mappings_path , "wb" ) , protocol=2 )
-
 
 	def process_files( self , refresh = False   ):
 		# this function saves on disk the mappings in between the vector embeddings and the 
 		# List existing files on data folder , 
 
-		#if refresh:
-			# 
-		#	self.delete_files()
+		if refresh: 
+			self.delete_files()
 
 		if os.path.isfile( self.hdf_path ):
 
@@ -400,7 +380,8 @@ class DataManager():
 			data = json.loads( data )
 			#print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
 		return data["dependencies"]
-	        
+
+"""	        
 	def test_update( self ): 
 
 		#
@@ -418,6 +399,7 @@ class DataManager():
 
 		#print( reqs[0]["id"])
 		self.add_or_update_reqs(reqs )
+
 
 
 	def test_accuracy( self ):
@@ -505,7 +487,7 @@ class DataManager():
 
 			print("Average true positives rate for {} candidates: {} ".format( k , arr)  )
 
-
+"""
 
 
 

@@ -1,4 +1,5 @@
-
+import warnings
+warnings.filterwarnings(action='ignore', category=UserWarning, module='gensim')
 
 import numpy as np 
 import pandas as pd 
@@ -25,29 +26,6 @@ class FastTextUtils():
 		self.dim = v.shape[0]
 
 		return True
-
-	def text_clean( self , text ):
-
-		text = text.lower()
-		text = text.encode("utf-8" , "ignore")
-		text = text.translate( string.maketrans("",""), string.punctuation  )
-		return text 
-
-
-	def get_embedding( self , text ):
-
-		text = self.text_clean( text )
-
-		embedding = np.zeros(  ( self.dim ) )
-		words = text.split(" ")
-		for word in words:
-
-			emb = self.model[word]
-			embedding += emb 
-
-		embedding /= len( words )
-
-		return embedding 
 
 
 

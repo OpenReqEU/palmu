@@ -78,3 +78,4 @@ class GBMModel( ):
 
 
 
+#TITLE-ABS-KEY ( ( requirement OR requirements OR software OR NLP OR machine learning) AND ( link OR dependency OR interdependency ) AND ( detection OR detector OR extraction ) AND ( "natural language" ) ) AND ( PUBYEAR > 2010 AND PUBYEAR < 2019 ) 
