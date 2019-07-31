@@ -37,9 +37,7 @@ class DataManager():
 		end = time.time()
 		time_difference = end - start
 		print("Time diff:" , time_difference )
-		#self.process_files()
-		#self.test_accuracy()
-		#self.test_update()
+
 		return None
 
 	def delete_files(self):
@@ -67,9 +65,6 @@ class DataManager():
 		# Dimenstion of the vectors
 		D = self.featurizer.final_size
 		self.index = faiss.IndexFlatIP( D )
-		#self.index.train(  normalize_L2( self.) )
-		#cont = np.ascontiguousarray( self.data )
-		#cont = faiss.normalize_L2( cont )
 		self.index.train( self.norm_vec(self.data) )
 		self.index.add( self.norm_vec( self.data)  )
 		
@@ -105,7 +100,6 @@ class DataManager():
 		partial_map = {}
 		for issue in I[0][1:] :
 
-			#print( self.inverse_mapping[issue] )
 			# issue is an index
 			emb_candidate = self.data[ issue , : ].reshape( 1 , self.featurizer.final_size )
 
@@ -131,11 +125,8 @@ class DataManager():
 	def parse_issue( self , qtid , dup , score = "" , multiplier = 1.0  ):
 
 
-		if dup in self.dependencies_dict.keys():
+		if dup not in self.dependencies_dict.keys():
 
-			score = score
-		else:
-			#print( "ORPHAN FOUND" , dup )
 			score = score*multiplier
 
 
@@ -157,7 +148,7 @@ class DataManager():
 		self.hdf5_file.close() # for safety 
 		self.hdf5_file = tables.open_file( self.hdf_path , mode = "r+") # re open
 
-		#data = self.hdf5_file.root.data[:]
+		#
 		i = 0 
 		print("updating requirements:")
 		for req in tqdm( list_new_reqs ):
@@ -169,7 +160,7 @@ class DataManager():
 
 			if query_id in self.mappings.keys():
 				# Idd already exists in dataset
-				#print(idd , i  , " in index ")
+				#
 				indexId = self.mappings[query_id]
 
 				# after we get the embedding
@@ -213,10 +204,7 @@ class DataManager():
 		else:
 			
 			self.add_or_update_reqs( [ openreqJson] )
-			#embedding = embedding.reshape( ( 1 , 100 ))
-			#print( embedding.shape )
-			#embedding = self.norm_vec( embedding )
-			#self.add_new_embedding_index( embedding , newId  )
+
 			issues = self.find_by_id( newId  , k , k2 )
 
 			return issues
@@ -381,113 +369,6 @@ class DataManager():
 			#print(" getting requirements from {}  - number of reqs: {}".format(  file , len(data["requirements"])) )
 		return data["dependencies"]
 
-"""	        
-	def test_update( self ): 
-
-		#
-		reqs = self.get_reqs( "./data/QTWB.json") 
-		
-		self.add_or_update_reqs( reqs )
-		for req in reqs:
-			req["text"] = req["text"] + " modified dfdsfsdfsfs"
-
-		# test modify content same req 
-		self.add_or_update_reqs( reqs )
-
-		for  i , req in enumerate( reqs ) :
-			req["id"]  = req["id"] + "___{}".format( i*121 )
-
-		#print( reqs[0]["id"])
-		self.add_or_update_reqs(reqs )
-
-
-
-	def test_accuracy( self ):
-
-		df = pd.read_csv("./dataset_palmu_test_duplicates.csv")
-		df = df[:]
-		ids = df["ids"].values
-		dependencies = df["dependencies"].values
-		print("TEST")
-
-		results = []
-
-		l = 0
-
-		ks = [ 100 , 1000  ]
-
-		k100_tp = []
-
-		true_positives_dict = {}
-		true_positives_dict[ ks[0] ] = 0.0
-		true_positives_dict[ ks[1] ] = 0.0
-
-		total_deps =  0
-		for idd , dep in zip(ids , dependencies):
-			#print( type( dep ))
-
-			total_deps += len( ast.literal_eval( dep )  )
-
-		for idd , dep  in zip(ids , dependencies )  :
-			#if l % 500 == 0 :
-
-			print( l )
-			l = l + 1
-
-			corrects_by_k = []
-
-			avg_true_positives = 0.0
-			
-
-			for k  in ks :
-
-				issues = self.find_by_id( idd  , k = k  , k2 = k )
-
-				corrects = 0
-				correct_issues = []
-				for i in issues: 
-
-					#print( type(i) )
-					id_issue = i["toid"]
-
-					#print( type( dep )  )
-					if id_issue in dep:
-						corrects = corrects + 1
-						correct_issues.append( i["toid"] )
-
-				d = 0
-				#print( len(dep) )
-				#print( corrects )
-				#true_positives_rate = corrects/float( len( dep  )  + d )
-				true_positives_dict[ k ] += corrects  
-
-				#print(" True positives rate: " ,  true_positives_rate )
-				#print( "False positives rate:" , 1 - true_positives_rate )
-				#print( "Samples:" , len(issues))
-				corrects_by_k.append( correct_issues )
-
-			results.append( corrects_by_k )
-
-
-		df["palmu_depencendies"] = results 
-
-		df2 = pd.DataFrame( df.palmu_depencendies.to_list() , columns = [ "k{}".format(x) for x in ks ] )
-
-		df_final = pd.concat( [ df[ ["ids" , "dependencies" ] ] , df2 ] , axis = 1 )
-
-		df_final.to_csv("./results_test_k100_k1000_with_lgb_complete.csv")
-
-		k5_found = 0
-		k20_found = 0
-
-		for k in ks: 
-			print( total_deps )
-			print( true_positives_dict[k] )
-			arr =  (true_positives_dict[k]/total_deps)*100
-
-			print("Average true positives rate for {} candidates: {} ".format( k , arr)  )
-
-"""
 
 
 

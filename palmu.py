@@ -23,8 +23,6 @@ from dataManager import DataManager
 FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
 JSONS_PATH = "./data"
-#dm = DataManager( jsons_path = JSONS_PATH , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat")
-
 
 class Palmu():
 
@@ -68,17 +66,13 @@ class Palmu():
 			# read request, the requirement
 			req = request.get_json()
 
-			#return jsonify( { "dependencies" : [4]*4   })
+			
 			k = None 
 			try:
 				k = int( req["k"] ) 
 			except:
 				k = 5
 
-			if k == None:
-				k = 5
-			else:
-				k = int( k )
 			similar_issues = self.dm.find_by_new( req , k  )
 
 			if similar_issues == []:
@@ -99,7 +93,7 @@ class Palmu():
 
 
 		    project_name = data["projects"][0]["id"]
-		    #print("New project: ", project_name)
+		    #
 		    filename = project_name + '.json'
 		    self.dm.delete_files()
 		    path = os.path.join( JSONS_PATH , filename)
@@ -125,12 +119,3 @@ class Palmu():
 			return jsonify( resp )
 
 		return app 
-
-
-#celery.control.purge()
-
-
-	#print( files_json )
-
-	#app.run(host='0.0.0.0' , port=9210 , extra_files = files_json )
-	#app.before_first_request( prepare_data.oad_projects()  )

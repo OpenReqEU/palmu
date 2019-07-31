@@ -50,8 +50,7 @@ class Featurizer( ):
 
 	def featurize( self , req ):
 		# build the features for a single request 
-		#print( req["text"])
-		final_embedding = np.zeros( (self.dim) )
+		# 
 		emb_text = np.zeros( ( self.dim ))
 		emb_text =np.zeros( (self.dim ))
 		emb_comment = np.zeros( (self.dim) )
@@ -70,13 +69,11 @@ class Featurizer( ):
 
 	def get_average_embedding(self , txt ):
 		# calculates de average embedding
-		#embedding = np.zeros( (self.dim) )
+		#
 
 		if txt is None or txt is "" or txt is " ":
-			#return np.random.normal( size = (self.dim) )
-			return np.zeros( (self.dim))
-			#return np.zeros( (self.dim) ) # np.zeros( (self.dim))
 
+			return np.zeros( (self.dim))
 
 		txt = self.text_clean( txt )
 		words = txt.split(" ")
@@ -88,17 +85,16 @@ class Featurizer( ):
 			except:
 				emb = np.zeros( (self.dim) )
 
-			#print( emb )
+
 			embedding += emb
-		#print(embedding)
+
 		embedding = embedding / len( words )
 		return embedding
 
 	def get_comments_embeddings( self , req ):
 
 		if "comments" not in req  or len(  req["comments"]) == 0 :
-			#print("noooooooooooooooo")
-			#return np.random.normal( size = (self.dim) )
+
 			return np.zeros( (self.dim) )
 
 		embs = np.zeros( ( self.dim ))
@@ -119,7 +115,7 @@ class Featurizer( ):
 		if "text" not in components_dict.keys():
 			return np.random.normal( size = (self.dim) )
 
-		text_list = components_dict["text"] #.replace( '"' , "")[1:-1] #.split(",") #  .split('"' )
+		text_list = components_dict["text"] #
 		embs = np.zeros( (self.dim))
 		for word in text_list:
 			if word in model.keys():
@@ -131,14 +127,12 @@ class Featurizer( ):
 	def text_clean( self , text ):
 	
 		text = text.lower()
-		#text = text.encode("utf-8" , "ignore")
-		#print( type( text ))
-		#text = text.translate( str.maketrans("",""), string.punctuation  )
-		#text = text.translate(str.maketrans('', '', string.punctuation))
-		#table = str.maketrans({key: None for key in string.punctuation})
+		#
+		#
+		#
 		translator= text.maketrans('','' ,string.punctuation)
 		text = text.translate(translator)   
-		#print(text)
+		#
 		return text 
 
 
