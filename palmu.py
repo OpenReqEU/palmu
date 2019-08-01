@@ -1,22 +1,14 @@
 import numpy as np
-
 import pandas as pandas
-
 import faiss 
 import pickle 
 import argparse
-
-#import prepare_data
 import os
-
 import json
 from flask import Flask
 from flask import request
 from flask import jsonify 
 import requests
-from celery import Celery 
-from celery.signals import after_task_publish,task_success,task_prerun,task_postrun , task_success
-
 from dataManager import DataManager
 
 
@@ -118,4 +110,4 @@ class Palmu():
 			resp = { "status" : "ok" }
 			return jsonify( resp )
 
-		return app 
+		return app
