@@ -70,12 +70,33 @@ class DataManager():
 		
 		print( "Index Trained" , self.index.is_trained) 
 
+
 	def norm_vec( self , a ):
 		# function to normalize vectors 
 
 		a = a / np.sqrt( (a*a).sum(axis = 1 ) ).reshape( a.shape[0]  , 1 )
 
 		return  np.nan_to_num( a )  
+
+	def prune_index( self , I  , qtid ):
+		# prune the index to remove the already know dependencies.
+		new_index = []
+		n1 = len( I[0][1:] )
+
+		for issue in I[0][1:]:
+			if issue in self.inverse_mapping.keys():
+
+				proposed_id = self.inverse_mapping[ issue ]
+				if proposed_id in self.dependencies_dict[ qtid ]:
+					continue
+				else:
+					new_index.append( issue )
+		n2 = len( new_index )
+		diff = n1 - n2 
+		print(  "Pruned ids" , diff  )
+		return new_index
+
+
 
 	def find_by_id( self , qtid  , k = 5 , k2 = 20 , multiplier = 1   ):
 		# return list of know issues 
@@ -91,6 +112,7 @@ class DataManager():
 		#print( vector.shape )
 		distances , I = self.index.search( self.norm_vec( vector )   , k )
 
+		new_index = self.prune_index( I , qtid )
 		#print( I )
 		found_issues = []
 
@@ -98,7 +120,7 @@ class DataManager():
 		data_lgb = np.zeros(   (  len( I[0][1:]  ) , 2*self.featurizer.final_size   ))
 		i = 0
 		partial_map = {}
-		for issue in I[0][1:] :
+		for issue in new_index :
 
 			# issue is an index
 			emb_candidate = self.data[ issue , : ].reshape( 1 , self.featurizer.final_size )

@@ -66,7 +66,6 @@ class Featurizer( ):
 
 		return final_embedding
 
-
 	def get_average_embedding(self , txt ):
 		# calculates de average embedding
 		#
