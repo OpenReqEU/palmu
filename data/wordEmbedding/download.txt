@@ -1,0 +1,5 @@
+https://drive.google.com/file/d/1Y1rRyQN8DyZbtnUmIYuYXr08ZF8f-jSS/view?usp=sharing
+https://drive.google.com/file/d/119vRzV00oAlkQFwu1OS5HmFixSvOlep_/view?usp=sharing
+
+Download the word embeddings files used in Palmu using the previous links. 
+
