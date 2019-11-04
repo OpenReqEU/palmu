@@ -21,6 +21,10 @@ The service has not been deployed yet. Thus, there's no public API available.
 
 ## How to Install
 
+Must download and add to data folder:
+https://drive.google.com/file/d/1Y1rRyQN8DyZbtnUmIYuYXr08ZF8f-jSS/view
+https://drive.google.com/file/d/119vRzV00oAlkQFwu1OS5HmFixSvOlep_/view
+
 Must have valid project requirement JSON files in the /data/ folder for the program to build.
 Then, with Docker installed, run (this will take a while)
 
