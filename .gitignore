@@ -3,3 +3,5 @@
 data/*.txt
 .project
 *.csv
+*.swp
+__pycache__
