@@ -16,9 +16,12 @@ FAST_TEXT_MODEL = "./data/wordEmbedding/qtmodel_100.bin"
 LGB_PATH = "./data/lgb_results"
 JSONS_PATH = "./data"
 
+
+
 class Palmu():
 
 	def __init__( self , refresh = False  ):
+
 
 		self.dm = DataManager( jsons_path = JSONS_PATH , model_fasttext = FAST_TEXT_MODEL  , lgb_path = LGB_PATH , lgb_name = "Concat" , refresh = refresh )
 
@@ -103,6 +106,9 @@ class Palmu():
 		def update_reqs():
 
 			data = request.get_json()
+			with open(  JSONS_PATH + "new_reqs.json" , "a") as f:
+				f.write( json.dumps(data) )
+
 			reqs = data["requirements"]
 			# Requirements will be added, updated as needed but one important thing is that it will not return 
 			# any response until the whole thing is done. so it will only make sense if the number of requeriments to be updated is small

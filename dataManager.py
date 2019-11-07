@@ -196,7 +196,12 @@ class DataManager():
 				self.mappings[query_id] = newIndex
 			i += 1  
 
-		# save the modified mappings 
+		# save the modified mappings
+		files = os.listdir( self.jsons_path )
+		files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+		self.dependencies_dict = self.get_dependencies_dict(  files_json )
+
+		pickle.dump( self.dependencies_dict , open( self.dependencies_dict_path ,"wb") , protocol = 2 )
 		pickle.dump( self.mappings ,   open( self.mappings_path, "wb" ) , protocol=2 )
 		print("updates")
 		print( "number of keys:" , len( self.mappings.keys() ))
