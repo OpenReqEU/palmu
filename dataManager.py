@@ -87,6 +87,10 @@ class DataManager():
 			if issue in self.inverse_mapping.keys():
 
 				proposed_id = self.inverse_mapping[ issue ]
+				if qtid not in self.dependencies_dict.keys():
+					new_index.append ( issue )
+					continue
+
 				if proposed_id in self.dependencies_dict[ qtid ]:
 					continue
 				else:
@@ -133,8 +137,9 @@ class DataManager():
 
 		top_indexs , scores = self.model_lgbm.get_top_k( data_lgb , k = k2  )
 
-
+		print( partial_map )
 		for index , score  in zip( top_indexs , scores ) :
+
 			issue = partial_map[index]
 			if issue in self.inverse_mapping:
 				json_obj = self.parse_issue( qtid , self.inverse_mapping[issue] , score , multiplier    )
