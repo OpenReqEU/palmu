@@ -34,7 +34,7 @@ class Palmu():
 		def main():
 
 			if not self.dm.ready:
-				return json.dums( { "dependencies" : ["no data"] }) 
+				return json.dumps( { "dependencies" : ["no data"] }) 
 
 				
 
