@@ -252,12 +252,21 @@ class DataManager():
 			#print( self.dependencies_dict )
 			self.load_HDF5()
 			print( "File already exists ! loaded ")
+			self.ready = True 
+
 
 		else:
 
 
 			files = os.listdir( self.jsons_path )
 			files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+
+			if ( len(files_json) == 0 ):
+				# there are no files to build,  do nothing. 
+				self.ready = False 
+				return 
+
+
 			#print("Processing Json Files")
 			embs , mapp = self.get_embeddings( files_json  )
 			self.dependencies_dict = self.get_dependencies_dict( files_json )
@@ -288,9 +297,12 @@ class DataManager():
 
 
 			hdf5_embedd_file.close()
+			self.ready = True 
 			
 
 			print("HDF5 FILE CREATED AND LOADED")
+			return 
+			
 	def get_dependencies_dict( self , files_json  ):
 
 		total_deps = []
