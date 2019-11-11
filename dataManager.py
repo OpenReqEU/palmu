@@ -29,6 +29,7 @@ class DataManager():
 		self.hdf_path = self.jsons_path + "/hdf_emb.h5"
 		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
+		self.mappings = dict()
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
 
 		#self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
@@ -177,6 +178,11 @@ class DataManager():
 		return results
 
 	def add_or_update_reqs(self , list_new_reqs ):
+
+		if not os.path.exists( self.hdf_path):
+			self.load_projects2( False )
+			return True
+
 
 		if self.hdf5_file is not None:
 			self.hdf5_file.close() # for safety 

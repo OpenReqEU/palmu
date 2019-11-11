@@ -115,12 +115,13 @@ class Palmu():
 			with open(  JSONS_PATH + "/new_reqs_{}.json".format(self.counter_new_reqs) , "a" , encoding = "utf-8" ) as f:
 				f.write( json.dumps(data) )
 
-			self.counter_new_reqs = self.counter_new_reqs + 1 
+
 
 			reqs = data["requirements"]
 			# Requirements will be added, updated as needed but one important thing is that it will not return
 			# any response until the whole thing is done. so it will only make sense if the number of requeriments to be updated is small
 			self.dm.add_or_update_reqs( reqs )
+			self.counter_new_reqs = self.counter_new_reqs + 1 
 			resp = { "status" : "ok" }
 			return jsonify( resp )
 
