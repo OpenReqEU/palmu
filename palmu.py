@@ -38,9 +38,27 @@ class Palmu():
 
 				
 
+<<<<<<< HEAD
 
 
 
+			query_id = request.args.get('id')
+			k = request.args.get("k")
+			# Multiplies used to enhance the orphan score
+			multiplier = 1
+			try:
+				multiplier = int( request.args.get("m") )
+			except:
+				multiplier = 1
+			if k == None:
+				k = 5
+			else:
+				k = int( k )
+			if query_id is None:
+				return json.dumps( { "dependencies" : [""] } )
+
+			#Query issues from given id
+=======
 			query_id = request.args.get('id')
 			k = request.args.get("k")
 			# Multiplies used to enhance the orphan score
@@ -68,8 +86,27 @@ class Palmu():
 
 			# read request, the requirement
 			req = request.get_json()
+>>>>>>> release
+
+			similar_issues = self.dm.find_by_id( query_id , k = k , multiplier = multiplier  )
+			results = dict()
+			results["dependencies"] = similar_issues
+			return json.dumps( results )
+
+<<<<<<< HEAD
+		@app.route("/newIssue" , methods = ["POST"])
+		def new_issue():
+
+			# read request, the requirement
+			req = request.get_json()
 
 
+			k = None
+			try:
+				k = int( req["k"] )
+			except:
+				k = 5
+=======
 			k = None
 			try:
 				k = int( req["k"] )
@@ -83,7 +120,27 @@ class Palmu():
 				return jsonify( { "dependencies" : [""]})
 			else:
 				return jsonify( {"dependencies": similar_issues })
+>>>>>>> release
 
+			similar_issues = self.dm.find_by_new( req , k  )
+
+<<<<<<< HEAD
+			if similar_issues == []:
+
+				return jsonify( { "dependencies" : [""]})
+			else:
+				return jsonify( {"dependencies": similar_issues })
+
+=======
+		@app.route("/postProject", methods=['POST'])
+		def post_project():
+
+			#get data from request
+			data = request.get_json()
+
+			if data is None:
+				return jsonify( {"status" :  "ok"} )
+>>>>>>> release
 
 		@app.route("/postProject", methods=['POST'])
 		def post_project():
@@ -94,6 +151,7 @@ class Palmu():
 			if data is None:
 				return jsonify( {"status" :  "ok"} )
 
+<<<<<<< HEAD
 
 			project_name = data["projects"][0]["id"]
 			#
@@ -109,11 +167,28 @@ class Palmu():
 			data = { "status" : "ok"}
 			return jsonify( data )
 
+=======
+			project_name = data["projects"][0]["id"]
+			#
+			filename = project_name + '.json'
+			self.dm.delete_files()
+			path = os.path.join( JSONS_PATH , filename)
+
+			with open(path, 'w' , encoding = "utf-8") as json_file:
+				json.dump(data, json_file)
+				json_file.close()
+
+			# This will re launch the server and reload all available projects
+			data = { "status" : "ok"}
+			return jsonify( data )
+
+>>>>>>> release
 		@app.route("/updateRequirements", methods=['POST'])
 		def update_reqs():
 
 			data = request.get_json()
 			reqs = data["requirements"]
+<<<<<<< HEAD
 			data = request.get_json()	
 			with open(  JSONS_PATH + "/new_reqs_{}.json".format(self.counter_new_reqs) , "a" , encoding = "utf-8" ) as f:
 				f.write( json.dumps(data) )
@@ -129,3 +204,23 @@ class Palmu():
 			return jsonify( resp )
 
 		return app
+=======
+			data = request.get_json()
+			with open(  JSONS_PATH + "/new_reqs_{}.json".format(self.counter_new_reqs) , "a" , encoding = "utf-8" ) as f:
+				f.write( json.dumps(data) )
+
+
+
+			reqs = data["requirements"]
+			# Requirements will be added, updated as needed but one important thing is that it will not return
+			# any response until the whole thing is done. so it will only make sense if the number of requeriments to be updated is small
+			self.dm.add_or_update_reqs( reqs )
+			self.counter_new_reqs = self.counter_new_reqs + 1 
+			resp = { "status" : "ok" }
+			return jsonify( resp )
+
+		return app
+
+
+
+>>>>>>> release

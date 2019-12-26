@@ -11,7 +11,7 @@ from tqdm import tqdm
 class Featurizer( ):
 
 
-	def __init__( self , words_model , dim , encoder_reqstatus , encoder_reqtype   ):
+	def __init__( self , words_model , dim    ):
 
 		# this featurizer recieves an word2vec model as a dict 
 		# and  will have methods to build the representation for a requirement. 
@@ -20,8 +20,8 @@ class Featurizer( ):
 		# dim -> int
 		# label_encoder -> 
 		self.words_model = words_model
-		self.encoder_status = encoder_reqstatus
-		self.encoder_type = encoder_reqtype
+		#self.encoder_status = encoder_reqstatus
+		#self.encoder_type = encoder_reqtype
 		self.dim = dim # model dimensionclasses_
 		self.final_size = self.dim  #+ len(self.encoder_status.classes_) + len( self.encoder_type.classes_)
 		
