@@ -12,7 +12,9 @@ import featurizer , fastTextUtils , gbmModel
 import ast
 import time 
 
-from tqdm import tqdm 
+from tqdm import tqdm
+
+
 class DataManager():
 
 
@@ -29,7 +31,13 @@ class DataManager():
 		self.hdf_path = self.jsons_path + "/hdf_emb.h5"
 		self.hdf5_file = None 
 		self.mappings_path = self.jsons_path +  "/mappings200.map"
+		self.mappings = dict()
 		self.featurizer_path = self.jsons_path + "/featurizer.ft"
+
+		#self.featurizer = pickle.load( open( self.featurizer_path , "rb"))
+		self.featurizer = featurizer.Featurizer( self.model_fasttext.model , self.model_fasttext.dim  )
+		pickle.dump( self.featurizer ,   open( self.featurizer_path , "wb" ) , protocol=2 )
+		
 		self.dependencies_dict_path = self.jsons_path + "/dependencies_dict.bin"
 		self.dependencies_dict = {}
 		start = time.time()
@@ -54,10 +62,11 @@ class DataManager():
 	def load_projects2(self , refresh = False ):
 
 		self.process_files( refresh = refresh )
-		self.load_HDF5()
-		self.indexSize = 0 
-		self.build_index()
-		self.indexSize = self.data.shape[0] - 1 
+		if self.ready:
+			self.load_HDF5()
+			self.indexSize = 0 
+			self.build_index()
+			self.indexSize = self.data.shape[0] - 1 
 
 	def build_index( self ):
 		#builds the search index 
@@ -87,6 +96,10 @@ class DataManager():
 			if issue in self.inverse_mapping.keys():
 
 				proposed_id = self.inverse_mapping[ issue ]
+				if qtid not in self.dependencies_dict.keys():
+					new_index.append ( issue )
+					continue
+
 				if proposed_id in self.dependencies_dict[ qtid ]:
 					continue
 				else:
@@ -133,8 +146,9 @@ class DataManager():
 
 		top_indexs , scores = self.model_lgbm.get_top_k( data_lgb , k = k2  )
 
-
+		print( partial_map )
 		for index , score  in zip( top_indexs , scores ) :
+
 			issue = partial_map[index]
 			if issue in self.inverse_mapping:
 				json_obj = self.parse_issue( qtid , self.inverse_mapping[issue] , score , multiplier    )
@@ -167,8 +181,14 @@ class DataManager():
 
 	def add_or_update_reqs(self , list_new_reqs ):
 
-		self.hdf5_file.close() # for safety 
-		self.hdf5_file = tables.open_file( self.hdf_path , mode = "r+") # re open
+		if not os.path.exists( self.hdf_path):
+			self.load_projects2( False )
+			return True
+
+
+		if self.hdf5_file is not None:
+			self.hdf5_file.close() # for safety 
+			self.hdf5_file = tables.open_file( self.hdf_path , mode = "r+") # re open
 
 		#
 		i = 0 
@@ -199,6 +219,9 @@ class DataManager():
 		# save the modified mappings
 		files = os.listdir( self.jsons_path )
 		files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+		if len( files_json) == 0:
+			self.ready = False 
+			return False 
 		self.dependencies_dict = self.get_dependencies_dict(  files_json )
 
 		pickle.dump( self.dependencies_dict , open( self.dependencies_dict_path ,"wb") , protocol = 2 )
@@ -252,12 +275,21 @@ class DataManager():
 			#print( self.dependencies_dict )
 			self.load_HDF5()
 			print( "File already exists ! loaded ")
+			self.ready = True 
+
 
 		else:
 
 
 			files = os.listdir( self.jsons_path )
 			files_json = [ self.jsons_path+"/"+f for f in files if ".json" in f ]
+
+			if ( len(files_json) == 0 ):
+				# there are no files to build,  do nothing. 
+				self.ready = False 
+				return 
+
+
 			#print("Processing Json Files")
 			embs , mapp = self.get_embeddings( files_json  )
 			self.dependencies_dict = self.get_dependencies_dict( files_json )
@@ -288,9 +320,12 @@ class DataManager():
 
 
 			hdf5_embedd_file.close()
+			self.ready = True 
 			
 
 			print("HDF5 FILE CREATED AND LOADED")
+			return 
+			
 	def get_dependencies_dict( self , files_json  ):
 
 		total_deps = []
@@ -364,11 +399,11 @@ class DataManager():
 		types = list(set(types))
 		print( status )
 		print( types )
-		encoder_status = preprocessing.LabelEncoder()
-		encoder_type = preprocessing.LabelEncoder()
-		encoder_status = encoder_status.fit( status )
-		encoder_type = encoder_type.fit( types )
-		self.featurizer = featurizer.Featurizer( self.model_fasttext.model , self.model_fasttext.dim  , encoder_status , encoder_type)
+		#encoder_status = preprocessing.LabelEncoder()
+		#encoder_type = preprocessing.LabelEncoder()
+		#encoder_status = encoder_status.fit( status )
+		#encoder_type = encoder_type.fit( types )
+		self.featurizer = featurizer.Featurizer( self.model_fasttext.model , self.model_fasttext.dim  )
 
 		all_embeddings , mapping = self.featurizer.featurize_reqs( all_reqs )
 		pickle.dump( self.featurizer ,   open( self.featurizer_path , "wb" ) , protocol=2 )
